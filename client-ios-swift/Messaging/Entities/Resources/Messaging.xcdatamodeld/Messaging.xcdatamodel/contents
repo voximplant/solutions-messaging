@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="14903" systemVersion="18G95" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="User" representedClassName="UserVI" syncable="YES" codeGenerationType="class">
+        <attribute name="conversationList" optional="YES" attributeType="Transformable" customClassName="[String]"/>
+        <attribute name="deletedUser" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="displayName" attributeType="String"/>
+        <attribute name="imId" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="leaveConversationList" optional="YES" attributeType="Transformable" customClassName="[String]"/>
+        <attribute name="name" attributeType="String"/>
+    </entity>
+    <elements>
+        <element name="User" positionX="-63" positionY="-18" width="128" height="133"/>
+    </elements>
+</model>

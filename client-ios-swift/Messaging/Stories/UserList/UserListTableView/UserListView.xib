@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="15400" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina5_9" orientation="portrait" appearance="dark"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15404"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="UserListView" customModule="Messaging" customModuleProvider="target">
+            <connections>
+                <outlet property="activityIndicatorView" destination="g8d-cx-Q5W" id="x5n-dy-T0s"/>
+                <outlet property="tableView" destination="AJN-Qu-hfh" id="H1b-c0-kIk"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clipsSubviews="YES" contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <tableView clipsSubviews="YES" contentMode="scaleAspectFill" alwaysBounceVertical="YES" bouncesZoom="NO" style="plain" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="AJN-Qu-hfh" customClass="UserListTableView" customModule="Messaging" customModuleProvider="target">
+                    <rect key="frame" x="0.0" y="0.0" width="375" height="812"/>
+                    <color key="separatorColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                    <inset key="separatorInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+                </tableView>
+                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="g8d-cx-Q5W">
+                    <rect key="frame" x="169" y="387.66666666666669" width="37" height="37"/>
+                    <color key="color" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                </activityIndicatorView>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstItem="AJN-Qu-hfh" firstAttribute="leading" secondItem="vUN-kp-3ea" secondAttribute="leading" id="1TP-wa-OuE"/>
+                <constraint firstItem="g8d-cx-Q5W" firstAttribute="centerX" secondItem="iN0-l3-epB" secondAttribute="centerX" id="4JL-KK-yGJ"/>
+                <constraint firstItem="AJN-Qu-hfh" firstAttribute="trailing" secondItem="vUN-kp-3ea" secondAttribute="trailing" id="CQh-9L-Wjf"/>
+                <constraint firstItem="AJN-Qu-hfh" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="PeY-to-GUQ"/>
+                <constraint firstAttribute="bottom" secondItem="AJN-Qu-hfh" secondAttribute="bottom" id="nCu-ER-j2E"/>
+                <constraint firstItem="g8d-cx-Q5W" firstAttribute="centerY" secondItem="iN0-l3-epB" secondAttribute="centerY" id="xoi-ZC-ZxG"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <point key="canvasLocation" x="139" y="147"/>
+        </view>
+    </objects>
+</document>
