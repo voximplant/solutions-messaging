@@ -6,8 +6,8 @@ import Foundation
 import VoxImplant
 
 #error ("Enter Voximplant account credentials")
-let appName = "messaging"
-let accountName = "mobiledev"
+let appName = "appName"
+let accountName = "accName"
 let voxDomain = ".voximplant.com"
 
 protocol VoximplantServiceDelegate: AnyObject {
