@@ -414,7 +414,7 @@ func remove(participants: [VIConversationParticipant], from conversation: VIConv
 
 And this is the method that allows users to leave a conversation:
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 ```typescript
 public leaveConversation(currentConversationUuid: string) {
     MessengerService.messenger.leaveConversation(currentConversationUuid)
@@ -422,7 +422,7 @@ public leaveConversation(currentConversationUuid: string) {
   }
 ```
 ----
-iOS client (**VoximplantService.swift**):
+>iOS client (**VoximplantService.swift**):
 ```swift
 func leaveConversation(with UUID: String, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
        messenger.leaveConversation(UUID, completion: VIMessengerCompletion<VIConversationEvent> (success:
