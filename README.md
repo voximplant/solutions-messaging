@@ -1,18 +1,18 @@
 Messaging allows you to implement text communications within main Voximplant developer account: account users can log in via Voximplant SDKs and become participants in conversations. Follow this tutorial to learn how to create your own web and mobile messaging client based on our SDKs.
 
 ## WHAT YOU NEED
-Voximplant developer account. If you don’t have one, sign up here.
-Voximplant application, JS scenario, rule, and two users. Those will be created during this tutorial.
-Client for users to log in. We’ll use our demo clients for Web and iOS.
-Backend server for storing users of a Voximplant application. 
+* Voximplant developer account. If you don’t have one, [sign up here](https://voximplant.com/sign-up/).
+* Voximplant application, JS scenario, rule, and two users. Those will be created during this tutorial.
+* Client for users to log in. We’ll use our demo clients for Web and iOS.
+* Backend server for storing users of a Voximplant application. 
 
 ## BACKEND SERVER
 It’s for the better to make a request for all available users within a Voximplant application at each client’s start. In order to do so, the client has to request all users related to already created conversation by using your Voximplant account credentials.
-This is where the backend server is in need: we don’t want to store private authorization on the client side since it’s totally insecure (chances are you don’t want it either), so we can delegate it to backend. We’ve implemented a backend server using PHP, check the full listing of it here. You’re free to either use our solution or implement your own server using another programming language.
+This is where the backend server is in need: we don’t want to store private authorization on the client side since it’s totally insecure (chances are you don’t want it either), so we can delegate it to backend. We’ve implemented a backend server using PHP, check the full listing of it [here](https://github.com/voximplant/solutions-messaging/blob/master/server/index.php). You’re free to either use our solution or implement your own server using another programming language.
 
 ## 1. VOXIMPLANT APPLICATION SETTINGS
-First, log in to your account here: https://manage.voximplant.com/auth. On the left menu, select Applications, click New application and create a messaging application. 
-Next, you have to create at least two users for your application. Switch to the Users tab, click Create user, set username (e.g., user1) and password, then select the Create another checkbox and click Create. The same window for creating the second user will appear in which you should unselect Create another as we don’t need more users. We’ll need these users’ login-password pairs to authenticate in the clients.
+First, log in to your account here: https://manage.voximplant.com/auth. On the left menu, select **Applications**, click **New application** and create a **messaging** application. 
+Next, you have to create at least two users for your application. Switch to the **Users** tab, click **Create user**, set username (e.g., user1) and password, then select the **Create another** checkbox and click **Create**. The same window for creating the second user will appear in which you should unselect **Create another** as we don’t need more users. We’ll need these users’ login-password pairs to authenticate in the clients.
 
 ## 2. CLIENT
 ### Connect to Voximplant and login
@@ -21,7 +21,8 @@ Initialize your project depending on what type of client you are going to use.
 
 First, you have to make the login screen to work properly. The client has to know what credentials to use for authentication. 
 
-Web client
+>Web client
+
 Open the **vox.service.ts** and use the following code for connection and authentication to the Voximplant cloud:
 
 ```typescript
@@ -55,8 +56,9 @@ public onLogin(loginForm, accessToken) {
     }
   }
 ```
+----
+>iOS client
 
-iOS client:
 Open the **AuthService.swift** and use the following code for connection and authentication to the Voximplant cloud:
 
 
@@ -113,7 +115,10 @@ We suggest that this part of the code should do the following:
 - receive other users from backend
 - add listeners for events that will be triggering over WebSockets
 
-Web client: all the methods related to communication with Messaging are comprised in the **messenger.service.ts** file. 
+
+>Web client
+
+All the methods related to communication with Messaging are comprised in the **messenger.service.ts** file. 
 
 ```typescript
 public async init() {
@@ -170,9 +175,9 @@ public async init() {
     return initialData;
   }
 ```
-—————
+----
 
-iOS client:
+>iOS client:
 ```swift
 (AppDelegate.swift)
 let voximplantService =  VoximplantService(with: client.messenger)
@@ -195,14 +200,12 @@ func requestUser(with username: String, completion: @escaping VIUserCompletion) 
    }
 ```
 
-
 From now on, your login screen allows users to authenticate in your client. 
-
 
 ### Retrieve conversations
 The client can retrieve all conversations that your user belongs to via the **getConversations** method:
 
-Web client (**messenger.service.ts**):
+>Web client (**messenger.service.ts**):
 ```typescript
 private getCurrentConversations(conversationsList) {
     return MessengerService.messenger.getConversations(conversationsList).catch((e) => {
@@ -211,8 +214,8 @@ private getCurrentConversations(conversationsList) {
     });
   }
 ```
-
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func requestMultipleConversations(with uuids: [String], completion: @escaping (Result<[VIConversation], Error>) -> Void) {
        messenger.getConversations(uuids, completion: VIMessengerCompletion<NSArray> (success:
@@ -230,13 +233,13 @@ func requestMultipleConversations(with uuids: [String], completion: @escaping (R
 
 Voximplant Messaging allows creating different types of conversations: regular (public and non-public) and direct ones, see the details here.  In these particular demo clients they are implemented as chat, direct and broadcast. To create a conversation, there is a **createConversation** method, whereas demo clients have appropriate wrappers for it.
 
-Client-specific note
-
-Permissions that are specified on creating a conversation become default permissions for this particular conversation; this means that all new participants will inherit them. If none of permissions is specified on creating a conversation, the following ones will be applied: canRead, canWrite, canRemove.
+>**Client-specific note**
+>
+>Permissions that are specified on creating a conversation become **default permissions** for this particular conversation; this means that all new participants will inherit them. If none of permissions is specified on creating a conversation, the following ones will be applied: **canRead**, **canWrite**, **canRemove**.
 
 Here is an example of how to create a chat where all members can write and see messages of each other:
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 ```typescript
 private createNewConversation(participants, title: string, direct:boolean, publicJoin:boolean, uber:boolean, customData:object) {
     return MessengerService.messenger.createConversation(participants, title, direct, publicJoin, uber, customData);
@@ -274,8 +277,8 @@ public createChat(newChatData: NewChatData) {
       });
   }
 ```
-
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func createConversation(with config: VIConversationConfig, completion: @escaping (Result<VIConversation, Error>) -> Void) {
        messenger.createConversation(config, completion: VIMessengerCompletion<VIConversationEvent> (success:
@@ -291,7 +294,8 @@ func createConversation(with config: VIConversationConfig, completion: @escaping
 Pay attention that conversations are created on behalf of a user which is currently logged in on your client. That means this user becomes the owner and the very first admin of a newly created application with all possible permissions (see the details on permissions here).
 
 Once a conversation is created, others can join it or be joined by administrators of the conversation.
-Managing conversations
+
+### Managing conversations
 Being an administrator, your user can edit conversations and also leave them. It’s possible due to the **addParticipants**, **removeParticipants**, **addAdmins**, **removeAdmins**, **editPermissions** and **leaveConversation** methods. 
 
 Editing includes changing of:
@@ -304,7 +308,7 @@ Let’s assume that the administrator wants to change all the mentioned aspects 
 
 The method to change the title and custom data. Custom data changing has a nuance: you can’t just pass changes of one field, you have to copy all other fields, otherwise, other fields will be deleted.
 
-Web client (**actionConversations.ts**)
+>Web client (**actionConversations.ts**)
 ```typescript
 editConversation: ({ getters }, newData) => {
     if (newData.title && newData.title !== getters.currentConversation.title) {
@@ -318,7 +322,8 @@ editConversation: ({ getters }, newData) => {
     }
   }
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 
 ```swift
 func update(conversation: VIConversation, title: String, customData: CustomData, completion: @escaping (Result<(), Error>) -> Void) {
@@ -343,7 +348,7 @@ func update(conversation: VIConversation, completion: @escaping (Result<VIConver
 
 The method to change some of the user’s permissions
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 ```typescript
 public editPermissions(currentConversation: Conversation, permissions: Permissions, allUserIds: number[]) {
     currentConversation.setCustomData({ ...currentConversation.customData, permissions });
@@ -353,7 +358,8 @@ public editPermissions(currentConversation: Conversation, permissions: Permissio
     }))).catch(logError);
   }
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func edit(participants: [VIConversationParticipant], in conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
        conversation.editParticipants(participants, completion: VIMessengerCompletion<VIConversationEvent> (success:
@@ -368,7 +374,7 @@ func edit(participants: [VIConversationParticipant], in conversation: VIConversa
 
 The methods for adding and removing users
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 
 ```typescript
 public addParticipants(currentConversation: Conversation, userIds: number[]) {
@@ -382,7 +388,8 @@ public removeParticipants(currentConversation: Conversation, userIds: number[]) 
     return currentConversation.removeParticipants(userIds.map((userId) => ({userId}))).catch(logError);
   }
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func add(participants: [VIConversationParticipant], to conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
        conversation.addParticipants(participants, completion: VIMessengerCompletion<VIConversationEvent> (success:
@@ -414,6 +421,7 @@ public leaveConversation(currentConversationUuid: string) {
       .catch(logError);
   }
 ```
+----
 iOS client (**VoximplantService.swift**):
 ```swift
 func leaveConversation(with UUID: String, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
@@ -434,7 +442,7 @@ The following method is responsible for sending messages: **sendMessage**.
 To receive messages, you have to handle the event on message sending. Sending messages works in the same, event-driven way.
 
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 
 We’ve added this on initialization step (**addMessengerEventListeners**).
 See the listing of the **addMessengerEventListeners** function below:
@@ -466,7 +474,8 @@ private addMessengerEventListeners() {
     MessengerService.messenger.on(VoxImplant.Messaging.MessengerEvents.Typing, (e) => store.dispatch('conversations/onNotifyTyping', e));
   }
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 
 We’ve added this on initialization step.
 See the listing of the **VIMessengerDelegate** functions below:
@@ -508,7 +517,7 @@ To track changes of other messages, you have to subscribe to the **EditMessage**
 
 To edit your messages, use the appropriate method:
 
-Web client (**actionMessages.ts**)
+>Web client (**actionMessages.ts**)
 ```typescript
 editMessage: (context, newData) => {
     newData.message.text = newData.newText;
@@ -516,7 +525,8 @@ editMessage: (context, newData) => {
       .catch(logError);
   },
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func edit(message: VIMessage, with text: String, completion: @escaping (Result<VIMessageEvent, Error>) -> Void) {
        message.update(text, payload: nil, completion: VIMessengerCompletion<VIMessageEvent> (success:
@@ -529,17 +539,18 @@ func edit(message: VIMessage, with text: String, completion: @escaping (Result<V
    }
 ```
 
-
 To remove your messages, use the following method:
 
-Web client (**actionMessages.ts**)
+>Web client (**actionMessages.ts**)
+
 ```typescript
 deleteMessage: (context, message) => {
     MessengerService.get().removeMessage(message)
       .catch(logError);
   },
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 ```swift
 func remove(message: VIMessage, completion: @escaping (Result<VIMessageEvent, Error>) -> Void) {
        message.remove(completion: VIMessengerCompletion<VIMessageEvent> (success:
@@ -566,7 +577,7 @@ Each time when a user logs in, you have to retransmit events that triggered befo
 
 There is a **retransmitEvents** method that returns maximum 100 events. 
 
-Web client (**messenger.service.ts**)
+>Web client (**messenger.service.ts**)
 
 It accepts two required parameters, **eventFrom** and **lastEvent**, in order to specify the range of events. As each conversation object has the **lastSeq** field, it could be passed to the **lastEvent** parameter; **eventFrom** should be retrieved from the **seq** field of an event.
 
@@ -584,7 +595,8 @@ public retransmitMessageEvents(currentConversation: any, lastEvent?: number) {
       .catch(logError);
   }
 ```
-iOS client (**VoximplantService.swift**):
+----
+>iOS client (**VoximplantService.swift**):
 
 It accepts two required parameters, **to** and **count**, in order to specify the range of events. The **eventFrom** value should be retrieved from the **seq** field of an event and **count** is just a number of maximum of 100.
 
