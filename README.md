@@ -71,39 +71,113 @@ let authService = AuthService(client: client)
 **(AuthService.swift)**
 ```swift
 func connect(_ completion: @escaping (Result<(), Error>) -> Void) {
-       if client.clientState == .disconnected || client.clientState == .connecting {
-           connectCompletion = completion
-           client.connect()
-       } else {
-           completion(.success(()))
-       }
-   }
+    let state = client.clientState
 
-func login(with user: String, and password: String, completion: @escaping (Result<String, Error>) -> Void) {
-       connect() { result in
-           if case .failure(let error) = result { completion(.failure(error)) }
-           if case .success = result {
-               self.client.login(withUser: user, password: password, success: { displayName, tokens in
-                   completion(.success(displayName))
-               }) { error in
-                   completion(.failure(error))
-               }
-           }
-       }
-   }
+    if state == .disconnected || state  == .connecting {
+        client.connect()
+    } else {
+        completion(.success(()))
+    }
+}
 
-func login(with user: String, and token: String, completion: @escaping (Result<String, Error>) -> Void) {
-       connect() { result in
-           if case .failure(let error) = result { completion(.failure(error)) }
-           if case .success = result {
-               self.client.login(withUser: user, token: token, success: { displayName, tokens in
-                   completion(.success(displayName))
-               }) { error in
-                   completion(.failure(error))
-               }
-           }
-       }
-   }
+func login(
+    with user: String,
+    and password: String,
+    completion: @escaping (Result<String, Error>) -> Void
+) {
+    connect() { result in
+        if case .failure(let error) = result {
+            completion(.failure(error))
+        }
+        if case .success = result {
+            self.client.login(withUser: user,
+                              password: password,
+                              success: { displayName, tokens in
+                                completion(.success(displayName)) },
+                              failure: { error in
+                                completion(.failure(error)) })
+        }
+    }
+}
+
+func login(
+    with user: String,
+    and token: String,
+    completion: @escaping (Result<String, Error>) -> Void
+) {
+    connect() { result in
+        if case .failure(let error) = result {
+            completion(.failure(error))
+        }
+        if case .success = result {
+            self.client.login(withUser: user,
+                              token: token,
+                              success: { displayName, tokens in
+                                completion(.success(displayName)) },
+                              failure: { error in
+                                completion(.failure(error)) })
+        }
+    }
+}
+```
+
+----
+>Android client
+
+**(MessagingApplication.kt)**
+```kotlin
+val client = Voximplant.getClientInstance(
+    Executors.newSingleThreadExecutor(),
+    applicationContext,
+    ClientConfig()
+)
+val clientManager = VoxClientManager(client)
+```
+
+**(VoxClientManager.kt)**
+```kotlin
+fun login(
+    username: String,
+    password: String
+) {
+    when (client.clientState) {
+        ClientState.DISCONNECTED ->
+            try {
+                client.connect()
+            } catch (e: IllegalStateException) {
+                Log.e(APP_TAG, "exception on connect $e")
+            }
+
+        ClientState.CONNECTED ->
+            client.login(username, password)
+
+        else -> return
+    }
+}
+
+fun loginWithToken(
+    username: String,
+    token: String
+) {
+    when (client.clientState) {
+        ClientState.DISCONNECTED ->
+            try {
+                client.connect()
+            } catch (e: IllegalStateException) {
+                Log.e(APP_TAG, "exception on connect $e")
+            }
+
+        ClientState.CONNECTED ->
+            client.loginWithAccessToken(username, token)
+
+        else -> return
+    }
+}
+
+// Login result will be sent via the IClientLoginListener methods;
+// e.g., if login is successfully completed,
+// onLoginSuccessful(displayName:authParams:)
+// will be called
 ```
 
 After successful initialization the client renders the login screen where you specify credentials, click **Sign in** and after that the client can log in to the Messaging module.  
@@ -176,28 +250,161 @@ public async init() {
   }
 ```
 ----
-
 >iOS client:
+
+**(AppDelegate.swift)**
 ```swift
-(AppDelegate.swift)
 let voximplantService =  VoximplantService(with: client.messenger)
-
- (VoximplantService.swift)
+```
+**(VoximplantService.swift)**
+```swift
 private let messenger: VIMessenger
-   init(with messenger: VIMessenger) {
-       self.messenger = messenger
-       super.init()
-       self.messenger.addDelegate(self)
-   }
 
-func requestUser(with username: String, completion: @escaping VIUserCompletion) {
-       messenger.getUserByName(username, completion: VIMessengerCompletion<VIUserEvent> (success:
-           { userEvent in
-               completion(.success(userEvent.user)) })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+init(with messenger: VIMessenger) {
+    self.messenger = messenger
+    super.init()
+    self.messenger.addDelegate(self)
+}
+
+// Call requestUser(with:completion:) with messenger.me as a username
+// to get the VIUser instance for the current user
+func requestUser(
+    with username: String,
+    completion: @escaping (Result<VIUser, Error>) -> Void
+) {
+    messenger.getUserByName(username, completion:
+        VIMessengerCompletion<VIUserEvent> (
+            success: { userEvent in
+                completion(.success(userEvent.user))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+
+// Get conversationList from the VIUser instance
+// of the current user (user.conversationList).
+// Call requestMultipleConversations(with:completion:) with a conversationList array
+// to get all the conversations where the current user belongs to
+func requestMultipleConversations(
+    with uuids: [String],
+    completion: @escaping (Result<[VIConversation], Error>) -> Void
+) {
+    messenger.getConversations(uuids, completion:
+        VIMessengerCompletion<NSArray> (
+            success: { conversationEvents in
+                let conversations =
+                    (conversationEvents as! [VIConversationEvent])
+                        .map { $0.conversation }
+                completion(.success(conversations))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+
+// Get participants from each 
+// VIConversation instance (conversation.participants).
+// Call requestUsers(with:completion:) with a participants ImIds array 
+// to get all the participants of the conversation
+func requestUsers(
+    with imIDArray: [NSNumber],
+    completion: @escaping (Result<[VIUser], Error>) -> Void
+) {
+    messenger.getUsersByIMId(imIDArray, completion:
+        VIMessengerCompletion<NSArray> (
+            success: { event in
+                let users = (event as! [VIUserEvent]).map { $0.user }
+                completion(.success(users))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
+
+----
+
+>Android client:
+
+**(Repository.kt)**
+```kotlin
+private val remote = VoximplantService(Voximplant.getMessenger())
+```
+
+**(VoximplantService.kt)**
+```kotlin
+private val messenger: IMessenger
+
+constructor(messenger: IMessenger) {
+    this.messenger = messenger
+    this.messenger.addMessengerListener(this)
+}
+
+// Call requestUser(username:completion:) with messenger.me as a username
+// to get the IUser instance for the current user
+fun requestUser(
+    username: String,
+    completion: (Result<IUser>) -> Unit
+) {
+    messenger.getUser(
+        username,
+        object : IMessengerCompletionHandler<IUserEvent> {
+            override fun onSuccess(event: IUserEvent) {
+                completion(success(event.user))
+            }
+            override fun onError(event: IErrorEvent) {
+                completion(failure(buildError(event)))
+            }
+        }
+    )
+}
+
+// Get conversationList from the IUser instance
+// of the current user (user.conversationList).
+// Call requestMultipleConversations(uuids:completion:) with conversationList 
+// to get all the conversations where the current user belongs to
+fun requestMultipleConversations(
+    uuids: List<String>,
+    completion: (Result<List<IConversation>>) -> Unit
+) {
+    messenger.getConversations(uuids, object :
+        IMessengerCompletionHandler<List<IConversationEvent>> {
+        override fun onSuccess(conversationEvents: List<IConversationEvent>) {
+            completion(success(conversationEvents.map { it.conversation }))
+        }
+        override fun onError(errorEvent: IErrorEvent) {
+            completion(failure(buildError(errorEvent)))
+        }
+    })
+}
+
+// Get participants from each
+// IConversation instance (conversation.participants).
+// Call requestUsers(imIDs:completion:) with a participants ImIds array 
+// to get all the participants of the conversation
+fun requestUsers(
+    imIDs: List<Long>,
+    completion: (Result<List<IUser>>) -> Unit
+) {
+    messenger.getUsersByIMId(
+        imIDs,
+        object : IMessengerCompletionHandler<List<IUserEvent>> {
+            override fun onSuccess(userEvents: List<IUserEvent>) {
+                completion(success(userEvents.map { it.user }))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
 ```
 
 From now on, your login screen allows users to authenticate in your client. 
@@ -217,17 +424,44 @@ private getCurrentConversations(conversationsList) {
 ----
 >iOS client (**VoximplantService.swift**):
 ```swift
-func requestMultipleConversations(with uuids: [String], completion: @escaping (Result<[VIConversation], Error>) -> Void) {
-       messenger.getConversations(uuids, completion: VIMessengerCompletion<NSArray> (success:
-           { conversationEvents in
-               let conversationEvents = conversationEvents as! [VIConversationEvent]
-               let conversations = conversationEvents.map { conversationEvent in conversationEvent.conversation }
-               completion(.success(conversations))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func requestMultipleConversations(
+    with uuids: [String],
+    completion: @escaping (Result<[VIConversation], Error>) -> Void
+) {
+    messenger.getConversations(uuids, completion:
+        VIMessengerCompletion<NSArray> (
+            success: { conversationEvents in
+                let conversations =
+                    (conversationEvents as! [VIConversationEvent])
+                        .map { $0.conversation }
+                completion(.success(conversations))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
+
+----
+
+>Android client **(VoximplantService.kt)**:
+```kotlin
+fun requestMultipleConversations(
+    uuids: List<String>,
+    completion: (Result<List<IConversation>>) -> Unit
+) {
+    messenger.getConversations(uuids, object :
+        IMessengerCompletionHandler<List<IConversationEvent>> {
+        override fun onSuccess(conversationEvents: List<IConversationEvent>) {
+            completion(success(conversationEvents.map { it.conversation }))
+        }
+        override fun onError(errorEvent: IErrorEvent) {
+            completion(failure(buildError(errorEvent)))
+        }
+    })
+}
 ```
 ## Create conversations
 
@@ -280,17 +514,72 @@ public createChat(newChatData: NewChatData) {
 ----
 >iOS client (**VoximplantService.swift**):
 ```swift
-func createConversation(with config: VIConversationConfig, completion: @escaping (Result<VIConversation, Error>) -> Void) {
-       messenger.createConversation(config, completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent.conversation)) })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func createConversation(
+    with title: String, and userImids: [NSNumber],
+    description: String, pictureName: String?,
+    isPublic: Bool, isUber: Bool, permissions: Permissions,
+    completion: @escaping (Result<VIConversation, Error>) -> Void
+) {
+    let config = VIConversationConfig()
+    config.title = title
+    config.isDirect = false
+    config.isUber = isUber
+    config.isPublicJoin = isPublic
+    config.participants = userImIds
+        .map { self.builder.buildVIParticipant(with: $0, and: permissions) }
+    config.customData = builder
+        .buildCustomData(for: .chat, with: pictureName, and: description)
+    
+    messenger.createConversation(config, completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent.conversation))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
 ```
 
+----
+>Android client (**VoximplantService.kt**):
+```kotlin
+fun createConversation(
+    title: String, userImIds: List<Long>, description: String,
+    pictureName: String?, isPublic: Boolean, isUber: Boolean,
+    permissions: Permissions, completion: (Result<IConversationEvent>) -> Unit
+) {
+    val config = ConversationConfig.createBuilder()
+        .setTitle(title)
+        .setDirect(false)
+        .setUber(isUber)
+        .setPublicJoin(isPublic)
+        .setParticipants(
+            userImIds
+                .map { builder.buildParticipant(it, permissions) }
+        )
+        .setCustomData(
+            builder.buildCustomData(
+                ConversationType.CHAT, pictureName, description
+            )
+        )
+        .build()
 
+    messenger.createConversation(
+        config,
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+```
 Pay attention that conversations are created on behalf of a user which is currently logged in on your client. That means this user becomes the owner and the very first admin of a newly created application with all possible permissions (see the details on permissions here).
 
 Once a conversation is created, others can join it or be joined by administrators of the conversation.
@@ -326,24 +615,57 @@ editConversation: ({ getters }, newData) => {
 >iOS client (**VoximplantService.swift**):
 
 ```swift
-func update(conversation: VIConversation, title: String, customData: CustomData, completion: @escaping (Result<(), Error>) -> Void) {
-       conversation.title = title
-       conversation.customData = customData
-       remoteDataSource.update(conversation: conversation) { result in
-           if case .failure (let error) = result { completion(.failure(error)) }
-           if case .success = result { completion(.success(())) }
-       }
-   }
+// Update the VIConversation instance properties and
+// call update(conversation:completion:) to update this conversation;
+// for example:
+// conversation.title = “newTitle”
+// conversation.isPublicJoin = true
+// update(conversation: conversation) { result in
+//     // handle result
+// }
+func update(
+    conversation: VIConversation,
+    completion: @escaping (Result<VIConversationEvent, Error>) -> Void
+) {
+    conversation.update(completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
 
-func update(conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
-       conversation.update(completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+----
+>Android client (**VoximplantService.kt**):
+```kotlin
+// Update the IConversation instance properties and
+// call updateConversation(conversation:completion:) to update this conversation;
+// for example:
+// conversation.title = “newTitle”
+// conversation.isPublicJoin = true
+// updateConversation(conversation) { result ->
+//     // handle result
+// }
+fun updateConversation(
+    conversation: IConversation,
+    completion: (Result<IConversationEvent>) -> Unit
+) {
+    conversation.update(
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
 ```
 
 The method to change some of the user’s permissions
@@ -361,15 +683,43 @@ public editPermissions(currentConversation: Conversation, permissions: Permissio
 ----
 >iOS client (**VoximplantService.swift**):
 ```swift
-func edit(participants: [VIConversationParticipant], in conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
-       conversation.editParticipants(participants, completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func edit(
+    participants: [VIConversationParticipant],
+    in conversation: VIConversation,
+    completion: @escaping (Result<VIConversationEvent, Error>) -> Void
+) {
+    conversation.editParticipants(participants, completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
+----
+>Android client (**VoximplantService.kt**):
+```kotlin
+fun editParticipants(
+    participants: List<ConversationParticipant>,
+    conversation: IConversation,
+    completion: (Result<IConversationEvent>) -> Unit
+) {
+    conversation.editParticipants(
+        participants,
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
 ```
 
 The methods for adding and removing users
@@ -391,25 +741,78 @@ public removeParticipants(currentConversation: Conversation, userIds: number[]) 
 ----
 >iOS client (**VoximplantService.swift**):
 ```swift
-func add(participants: [VIConversationParticipant], to conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
-       conversation.addParticipants(participants, completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func add(
+    participants: [VIConversationParticipant],
+    to conversation: VIConversation,
+    completion: @escaping (Result<VIConversationEvent, Error>) -> Void
+) {
+    conversation.addParticipants(participants, completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
 
-func remove(participants: [VIConversationParticipant], from conversation: VIConversation, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
-       conversation.removeParticipants(participants, completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func remove(
+    participants: [VIConversationParticipant],
+    from conversation: VIConversation,
+    completion: @escaping (Result<VIConversationEvent, Error>) -> Void
+) {
+    conversation.removeParticipants(participants, completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
+----
+>Android client (**VoximplantService.kt**):
+```kotlin
+fun addParticipants(
+    participants: List<ConversationParticipant>,
+    conversation: IConversation,
+    completion: (Result<IConversationEvent>) -> Unit
+) {
+    conversation.addParticipants(
+        participants,
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+
+fun removeParticipants(
+    participants: List<ConversationParticipant>,
+    conversation: IConversation,
+    completion: (Result<IConversationEvent>) -> Unit
+) {
+    conversation.removeParticipants(
+        participants,
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
 ```
 
 And this is the method that allows users to leave a conversation:
@@ -424,16 +827,43 @@ public leaveConversation(currentConversationUuid: string) {
 ----
 >iOS client (**VoximplantService.swift**):
 ```swift
-func leaveConversation(with UUID: String, completion: @escaping (Result<VIConversationEvent, Error>) -> Void) {
-       messenger.leaveConversation(UUID, completion: VIMessengerCompletion<VIConversationEvent> (success:
-           { conversationEvent in
-               completion(.success(conversationEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func leaveConversation(
+    with UUID: String,
+    completion: @escaping (Result<VIConversationEvent, Error>) -> Void
+) {
+    messenger.leaveConversation(UUID, completion:
+        VIMessengerCompletion<VIConversationEvent> (
+            success: { conversationEvent in
+                completion(.success(conversationEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
 ```
+----
+>Android client (**VoximplantService.kt**):
+```kotlin
+fun leaveConversation(
+    uuid: String,
+    completion: (Result<IConversationEvent>) -> Unit
+) {
+    messenger.leaveConversation(
+        uuid,
+        object : IMessengerCompletionHandler<IConversationEvent> {
+            override fun onSuccess(conversationEvent: IConversationEvent) {
+                completion(success(conversationEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+```
+
 The last method could come in handy if you need to remove the conversation: the owner can remove all other participants, then leave the conversation and that is how it would be deleted.
 
 ### Send/receive messages
@@ -477,40 +907,120 @@ private addMessengerEventListeners() {
 ----
 >iOS client (**VoximplantService.swift**):
 
-We’ve added this on initialization step.
-See the listing of the **VIMessengerDelegate** functions below:
+We’ve added delegate on VoximplantService initialization step:
 ```swift
-func messenger(_ messenger: VIMessenger, didEditMessage event: VIMessageEvent) {
-       delegate?.didReceive(messageEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didSendMessage event: VIMessageEvent) {
-       delegate?.didReceive(messageEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didRemoveMessage event: VIMessageEvent) {
-       delegate?.didReceive(messageEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didCreateConversation event: VIConversationEvent) {
-       delegate?.didReceive(conversationEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didRemoveConversation event: VIConversationEvent) {
-       delegate?.didReceive(conversationEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didEditConversation event: VIConversationEvent) {
-       delegate?.didReceive(conversationEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didReceiveTypingNotification event: VIConversationServiceEvent) {
-       if event.imUserId == me?.imId { return }
-       delegate?.didReceive(serviceEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didReceiveReadConfirmation event: VIConversationServiceEvent) {
-       if event.imUserId == me?.imId { return }
-       delegate?.didReceive(serviceEvent: event)
-   }
-   func messenger(_ messenger: VIMessenger, didEditUser event: VIUserEvent) {
-       delegate?.didReceive(userEvent: event)
-   }
+self.messenger.addDelegate(self)
 ```
 
+Send messages and receive didSendMessage events:
+```swift
+// Note that if a completion block is specified in a method call,
+// the didSendMessage event won’t be triggered
+func sendMessage(
+    with text: String,
+    in conversation: VIConversation,
+    completion: @escaping (Result<VIMessageEvent, Error>) -> Void
+) {
+    conversation.sendMessage(text, payload: nil, completion:
+        VIMessengerCompletion<VIMessageEvent> (
+            success: { messageEvent in
+                completion(.success(messageEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+
+func messenger(_ messenger: VIMessenger,
+               didSendMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+```
+
+See the listing of the **VIMessengerDelegate** functions below:
+```swift
+func messenger(_ messenger: VIMessenger,
+               didEditMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didSendMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didRemoveMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didCreateConversation event: VIConversationEvent) {
+    delegate?.didReceive(conversationEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didRemoveConversation event: VIConversationEvent) {
+    delegate?.didReceive(conversationEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didEditConversation event: VIConversationEvent) {
+    delegate?.didReceive(conversationEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didReceiveTypingNotification event: VIConversationServiceEvent) {
+    delegate?.didReceive(serviceEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didReceiveReadConfirmation event: VIConversationServiceEvent) {
+    delegate?.didReceive(serviceEvent: event)
+}
+
+func messenger(_ messenger: VIMessenger,
+               didEditUser event: VIUserEvent) {
+    delegate?.didReceive(userEvent: event)
+}
+```
+
+----
+>Android client (**VoximplantService.kt**):
+
+We’ve added listener on VoximplantService initialization step:
+```kotlin
+this.messenger.addMessengerListener(this)
+```
+Send messages and receive onSendMessage events:
+```kotlin
+// Note that if a completion block is specified in a method call,
+// the onSendMessage event won’t be triggered
+fun sendMessage(
+    text: String,
+    conversation: IConversation,
+    completion: (Result<IMessageEvent>) -> Unit
+) {
+    conversation.sendMessage(
+        text,
+        null,
+        object : IMessengerCompletionHandler<IMessageEvent> {
+            override fun onSuccess(messageEvent: IMessageEvent) {
+                completion(success(messageEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+
+override fun onSendMessage(event: IMessageEvent) {
+    listener?.onMessageEvent(event)
+}
+```
 
 ### Edit/remove messages
 To track changes of other messages, you have to subscribe to the **EditMessage** / **didEditMessage** and **RemoveMessage** / **didRemoveMessage** events as has been shown above.
@@ -527,16 +1037,62 @@ editMessage: (context, newData) => {
 ```
 ----
 >iOS client (**VoximplantService.swift**):
+
+Edit messages and receive didEditMessage events:
 ```swift
-func edit(message: VIMessage, with text: String, completion: @escaping (Result<VIMessageEvent, Error>) -> Void) {
-       message.update(text, payload: nil, completion: VIMessengerCompletion<VIMessageEvent> (success:
-           { messageEvent in
-               completion(.success(messageEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+// Note that if a completion block is specified in a method call,
+// the didEditMessage event won’t be triggered:
+func edit(
+    message: VIMessage,
+    with text: String,
+    completion: @escaping (Result<VIMessageEvent, Error>) -> Void
+) {
+    message.update(text, payload: nil, completion:
+        VIMessengerCompletion<VIMessageEvent> (
+            success: { messageEvent in
+                completion(.success(messageEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+
+func messenger(_ messenger: VIMessenger,
+               didEditMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+```
+----
+>Android client (**VoximplantService.kt**):
+
+Edit messages and receive onEditMessage events:
+```kotlin
+// Note that if a completion block is specified in a method call,
+// the onEditMessage event won’t be triggered:
+fun editMessage(
+    message: IMessage,
+    text: String,
+    completion: (Result<IMessageEvent>) -> Unit
+) {
+    message.update(
+        text,
+        null,
+        object : IMessengerCompletionHandler<IMessageEvent> {
+            override fun onSuccess(messageEvent: IMessageEvent) {
+                completion(success(messageEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+
+override fun onEditMessage(event: IMessageEvent) {
+    listener?.onMessageEvent(event)
+}
 ```
 
 To remove your messages, use the following method:
@@ -551,16 +1107,58 @@ deleteMessage: (context, message) => {
 ```
 ----
 >iOS client (**VoximplantService.swift**):
+
+Remove messages and receive didRemoveMessage events:
 ```swift
-func remove(message: VIMessage, completion: @escaping (Result<VIMessageEvent, Error>) -> Void) {
-       message.remove(completion: VIMessengerCompletion<VIMessageEvent> (success:
-           { messageEvent in
-               completion(.success(messageEvent))
-           })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+// Note that if a completion block is specified in a method call,
+// the didRemoveMessage event won’t be triggered:
+func remove(
+    message: VIMessage,
+    completion: @escaping (Result<VIMessageEvent, Error>) -> Void
+) {
+    message.remove(completion:
+        VIMessengerCompletion<VIMessageEvent> (
+            success: { messageEvent in
+                completion(.success(messageEvent))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+
+func messenger(_ messenger: VIMessenger,
+               didRemoveMessage event: VIMessageEvent) {
+    delegate?.didReceive(messageEvent: event)
+}
+```
+----
+>Android client (**VoximplantService.kt**):
+
+Remove messages and receive onRemoveMessage events:
+```kotlin
+// Note that if a completion block is specified in a method call,
+// the onRemoveMessage event won’t be triggered:
+fun removeMessage(
+    message: IMessage,
+    completion: (Result<IMessageEvent>) -> Unit
+) {
+    message.remove(
+        object : IMessengerCompletionHandler<IMessageEvent> {
+            override fun onSuccess(messageEvent: IMessageEvent) {
+                completion(success(messageEvent))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
+
+override fun onRemoveMessage(event: IMessageEvent) {
+    listener?.onMessageEvent(event)
+}
 ```
 
 ### Retransmit events
@@ -575,7 +1173,7 @@ If a user is logged in to a client, each and every one of these events can be tr
 
 Each time when a user logs in, you have to retransmit events that triggered before – this is the way to keep users up to date. 
 
-There is a **retransmitEvents** method that returns maximum 100 events. 
+In the Web SDK, there is a **retransmitEvents** method that returns maximum 100 events. 
 
 >Web client (**messenger.service.ts**)
 
@@ -598,17 +1196,64 @@ public retransmitMessageEvents(currentConversation: any, lastEvent?: number) {
 ----
 >iOS client (**VoximplantService.swift**):
 
-It accepts two required parameters, **to** and **count**, in order to specify the range of events. The **eventFrom** value should be retrieved from the **seq** field of an event and **count** is just a number of maximum of 100.
+In the iOS SDK, there are three methods, each of them returns maximum 100 events:
+**retransmitEvents
+retransmitEventsFrom
+retransmitEventsTo**
+
+In example of **retransmitEvents**, it accepts two required parameters, **to** and **count**, in order to specify the range of events. The **to** value should be retrieved from the lastSequence property of a conversation and **count** is just a number of maximum of 100.
 
 Implement this code to enable retransmitting:
 
 ```swift
-func requestMessengerEvents(for conversation: VIConversation, completion: @escaping (Result<[VIMessengerEvent], Error>) -> Void) {
-       conversation.retransmitEvents(to: conversation.lastSequence, count: UInt(100),completion: VIMessengerCompletion<VIRetransmitEvent> (success:
-           { retransmitEvents in
-               completion(.success(retransmitEvents.events)) })
-           { errorEvent in
-               completion(.failure(NSError.buildError(from: errorEvent)))
-           })
-   }
+func requestMessengerEvents(
+    for conversation: VIConversation,
+    completion: @escaping (Result<[VIMessengerEvent], Error>) -> Void
+) {
+    conversation.retransmitEvents(
+        to: conversation.lastSequence,
+        count: UInt(100),
+        completion: VIMessengerCompletion<VIRetransmitEvent> (
+            success: { retransmitEvents in
+                completion(.success(retransmitEvents.events))
+            },
+            failure: { errorEvent in
+                completion(.failure(NSError.buildError(from: errorEvent)))
+            }
+        )
+    )
+}
+```
+----
+>Android client (**VoximplantService.kt**):
+
+In the Android SDK, there are three methods, each of them returns maximum 100 events:
+**retransmitEvents
+retransmitEventsFrom
+retransmitEventsTo**
+
+In example of **retransmitEventsTo**, it accepts two required parameters, **to** and **count**, in order to specify the range of events.
+
+Implement this code to enable retransmitting:
+
+```kotlin
+fun requestMessengerEvents(
+    conversation: IConversation,
+    numberOfEvents: Int,
+    sequence: Long,
+    completion: (Result<List<IMessengerEvent>>) -> Unit
+) {
+    conversation.retransmitEventsTo(
+        sequence,
+        numberOfEvents,
+        object : IMessengerCompletionHandler<IRetransmitEvent> {
+            override fun onSuccess(retransmitEvents: IRetransmitEvent) {
+                completion(success(retransmitEvents.events))
+            }
+            override fun onError(errorEvent: IErrorEvent) {
+                completion(failure(buildError(errorEvent)))
+            }
+        }
+    )
+}
 ```
