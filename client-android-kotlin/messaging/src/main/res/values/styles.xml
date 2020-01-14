@@ -1,0 +1,62 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+        <item name="colorPrimaryDark">@color/statusBar</item>
+        <item name="alertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
+        <item name="colorSecondary">@color/containerLight</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorOnBackground">@color/container</item>
+        <item name="android:windowBackground">@color/colorBackground</item>r
+        <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
+    </style>
+
+    <style name="AppTheme.ActionBarStyle" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/text</item>
+        <item name="background">@color/colorBackground</item>
+        <item name="titleTextStyle">@style/AppTheme.TitleTextStyle</item>
+    </style>
+
+    <style name="AppTheme.TitleTextStyle" parent="TextAppearance.AppCompat.Widget.ActionBar.Title">
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="AppTheme.SpecialAccent" parent="AppTheme">
+        <item name="colorAccent">@color/colorWhite</item>
+    </style>
+
+    <style name="AppTheme.AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="buttonBarNegativeButtonStyle">@style/AppTheme.NegativeButtonStyle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/AppTheme.PositiveButtonStyle</item>
+    </style>
+
+    <style name="AppTheme.NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">#f00</item>
+    </style>
+
+    <style name="AppTheme.PositiveButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">#00f</item>
+    </style>
+
+    <style name="AppTheme.LoginScreenTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/colorWhite</item>
+        <item name="colorPrimaryDark">@color/colorPrimary</item>
+        <item name="colorAccent">@color/colorWhite</item>
+    </style>
+
+    <style name="AppTheme.AlertDialogThemeError" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/containerLight</item>
+        <!-- Used for the title and text -->
+        <item name="android:textColorPrimary">@color/text</item>
+        <!-- Used for the background -->
+        <item name="android:background">@color/colorBackground</item>
+        <item name="buttonBarButtonStyle">@style/AppTheme.PositiveButtonStyleDialog</item>
+    </style>
+
+    <style name="AppTheme.PositiveButtonStyleDialog" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/colorWhite</item>
+        <item name="backgroundTint">@color/colorButton</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+</resources>

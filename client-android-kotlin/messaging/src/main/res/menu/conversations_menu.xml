@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/conversations_menu"
+        android:icon="@drawable/ic_settings_48px"
+        android:title=""
+        app:iconTint="@color/text"
+        app:showAsAction="always" />
+</menu>

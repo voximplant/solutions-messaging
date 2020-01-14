@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Messaging</string>
+
+    <string name="prompt_login">username</string>
+    <string name="prompt_password">password</string>
+    <string name="action_sign_in">Login</string>
+    <string name="log_out">Logout</string>
+
+    <string name="error_invalid_password">This password is incorrect</string>
+    <string name="error_invalid_username">This username is incorrect</string>
+    <string name="alert_login_failed_account_frozen">Login failed due to account is frozen. Please contact your admin</string>
+    <string name="alert_login_failed_internal_error">Login failed due to internal error. Please try again</string>
+    <string name="alert_login_failed_timeout">Login failed due to timeout. Please try again</string>
+    <string name="alert_login_failed_network_issues">Login failed due to network issues. Please try again</string>
+    <string name="alert_login_failed_token_expired">Login failed due to token being expired. Please use password</string>
+    <string name="welcome_label_text">Messaging Demo</string>
+
+    <string name="progress_logging_in">Logging in…</string>
+    <string name="progress_updating">Updating…</string>
+    <string name="progress_connecting">Connecting…</string>
+    <string name="progress_creating">Creating..</string>
+    <string name="add_admins_empty_list_description">No admins to add</string>
+    <string name="remove_participants_empty_list_description">No participants to remove</string>
+    <string name="add_participants_empty_list_description">No participants to add</string>
+    <string name="remove_admins_empty_list_description">No admins to remove</string>
+</resources>
+
