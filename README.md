@@ -939,54 +939,6 @@ func messenger(_ messenger: VIMessenger,
 }
 ```
 
-See the listing of the **VIMessengerDelegate** functions below:
-```swift
-func messenger(_ messenger: VIMessenger,
-               didEditMessage event: VIMessageEvent) {
-    delegate?.didReceive(messageEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didSendMessage event: VIMessageEvent) {
-    delegate?.didReceive(messageEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didRemoveMessage event: VIMessageEvent) {
-    delegate?.didReceive(messageEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didCreateConversation event: VIConversationEvent) {
-    delegate?.didReceive(conversationEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didRemoveConversation event: VIConversationEvent) {
-    delegate?.didReceive(conversationEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didEditConversation event: VIConversationEvent) {
-    delegate?.didReceive(conversationEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didReceiveTypingNotification event: VIConversationServiceEvent) {
-    delegate?.didReceive(serviceEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didReceiveReadConfirmation event: VIConversationServiceEvent) {
-    delegate?.didReceive(serviceEvent: event)
-}
-
-func messenger(_ messenger: VIMessenger,
-               didEditUser event: VIUserEvent) {
-    delegate?.didReceive(userEvent: event)
-}
-```
-
 ----
 >Android client (**VoximplantService.kt**):
 
