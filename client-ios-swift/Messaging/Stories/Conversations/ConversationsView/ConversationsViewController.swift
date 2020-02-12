@@ -19,7 +19,7 @@ protocol ConversationsViewOutput: AnyObject, ControllerLifeCycle {
     func didAppearAfterRemoving(conversation: Conversation)
 }
 
-class ConversationsViewController: ViewController, ConversationsViewInput, UITableViewDelegate {
+final class ConversationsViewController: ViewController, ConversationsViewInput, UITableViewDelegate {
     var output: ConversationsViewOutput!
 
     @IBOutlet private weak var tableView: ConversationsTableView!

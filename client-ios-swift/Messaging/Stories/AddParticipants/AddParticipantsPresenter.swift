@@ -31,7 +31,7 @@ enum AddParticipantsModuleType {
     }
 }
 
-class AddParticipantsPresenter: Presenter, AddParticipantsViewOutput, AddParticipantsInteractorOutput, AddParticipantsRouterOutput, UserListOutput {
+final class AddParticipantsPresenter: Presenter, AddParticipantsViewOutput, AddParticipantsInteractorOutput, AddParticipantsRouterOutput, UserListOutput {
     private var type: AddParticipantsModuleType
     private weak var view: AddParticipantsViewInput?
     

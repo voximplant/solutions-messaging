@@ -14,7 +14,7 @@ protocol ParticipantsViewOutput: AnyObject, ControllerLifeCycle {
     func didAppearAfterAdding(with conversation: Conversation)
 }
 
-class ParticipantsViewController: ViewController, ParticipantsViewInput {
+final class ParticipantsViewController: ViewController, ParticipantsViewInput {
     var output: ParticipantsViewOutput!
     
     @IBOutlet weak var userListView: UserListView!

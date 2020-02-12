@@ -4,7 +4,7 @@
 
 import UIKit
 
-class PictureSelectorViewCellModel {
+final class PictureSelectorViewCellModel {
     var imageName: String
     var isSelected: Bool
     
@@ -14,7 +14,7 @@ class PictureSelectorViewCellModel {
     }
 }
 
-class PictureSelectorViewCollectionViewCell: UICollectionViewCell {
+final class PictureSelectorViewCollectionViewCell: UICollectionViewCell {
     @IBOutlet private weak var imageView: ImageView!
     @IBOutlet private weak var blurView: UIView!
     

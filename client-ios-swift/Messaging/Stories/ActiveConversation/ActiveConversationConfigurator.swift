@@ -8,7 +8,7 @@ protocol ActiveConversationConfiguratorProtocol: AnyObject {
     func configure(with viewController: ActiveConversationViewController, and conversation: Conversation)
 }
 
-class ActiveConversationConfigurator: ActiveConversationConfiguratorProtocol {
+final class ActiveConversationConfigurator: ActiveConversationConfiguratorProtocol {
     func configure(with viewController: ActiveConversationViewController, and conversation: Conversation) {
         let presenter = ActiveConversationPresenter(view: viewController, conversation: conversation)
         let interactor = ActiveConversationInteractor(output: presenter)

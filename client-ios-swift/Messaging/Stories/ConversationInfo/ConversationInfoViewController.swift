@@ -27,7 +27,7 @@ protocol ConversationInfoViewOutput: AnyObject, ControllerLifeCycle {
     func didAppearAfterChangingPermissions(_ conversation: Conversation)
 }
 
-class ConversationInfoViewController: ViewController, ConversationInfoViewInput {
+final class ConversationInfoViewController: ViewController, ConversationInfoViewInput {
     var output: ConversationInfoViewOutput!
     
     @IBOutlet weak var rightBarButton: BarButtonItem!

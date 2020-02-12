@@ -7,7 +7,7 @@ import Foundation
 fileprivate let messageCellID = "MessageTableViewCell"
 fileprivate let messageNibName = "MessageTableViewCell"
 
-class ActiveConversationTableView: TableView {
+final class ActiveConversationTableView: TableView {
     override var cellID: String { return messageCellID }
     override var nibName: String { return messageNibName }
 }

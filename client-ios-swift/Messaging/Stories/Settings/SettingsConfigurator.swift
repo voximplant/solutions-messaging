@@ -8,7 +8,7 @@ protocol SettingsConfiguratorProtocol: AnyObject {
     func configure(with viewController: SettingsViewController)
 }
 
-class SettingsConfigurator: SettingsConfiguratorProtocol {
+final class SettingsConfigurator: SettingsConfiguratorProtocol {
     func configure(with viewController: SettingsViewController) {
         let presenter = SettingsPresenter(view: viewController)
         let interactor = SettingsInteractor(output: presenter)

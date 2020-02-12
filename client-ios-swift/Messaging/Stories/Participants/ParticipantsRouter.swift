@@ -15,7 +15,7 @@ protocol ParticipantsRouterOutput: AnyObject {
     func requestConversationModel() -> Conversation
 }
 
-class ParticipantsRouter: NSObject, ParticipantsRouterInput, UINavigationControllerDelegate {
+final class ParticipantsRouter: NSObject, ParticipantsRouterInput, UINavigationControllerDelegate {
     weak var viewController: ParticipantsViewController?
     weak var output: ParticipantsRouterOutput?
     

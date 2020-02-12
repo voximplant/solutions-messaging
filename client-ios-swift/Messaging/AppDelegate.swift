@@ -3,7 +3,7 @@
 */
 
 import UIKit
-import VoxImplant
+import VoxImplantSDK
 
 fileprivate let client = VIClient(delegateQueue: DispatchQueue.main, bundleId: Bundle.main.bundleIdentifier)
 fileprivate let voximplantService: MessagingDataSource = VoximplantService(with: client.messenger)
@@ -12,7 +12,7 @@ let sharedAuthService: AuthServiceProtocol = AuthService(client: client)
 let sharedRepository: Repository = MessagingRepository(remote: voximplantService, local: coreDataManager)
 
 @UIApplicationMain
-class AppDelegate: UIResponder, UIApplicationDelegate {
+final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     private let authService = sharedAuthService
     

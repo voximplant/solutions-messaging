@@ -4,7 +4,7 @@
 
 import Foundation
 
-class CreateChatPresenter: Presenter, CreateChatViewOutput, CreateChatInteractorOutput, UserListOutput {
+final class CreateChatPresenter: Presenter, CreateChatViewOutput, CreateChatInteractorOutput, UserListOutput {
     weak var view: CreateChatViewInput?
     var userListInput: UserListInput!
     

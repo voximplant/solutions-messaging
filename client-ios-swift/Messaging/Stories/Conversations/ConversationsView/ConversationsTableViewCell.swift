@@ -10,7 +10,7 @@ struct ConversationCellModel {
     var pictureName: String?
 }
 
-class ConversationsTableViewCell: UITableViewCell {
+final class ConversationsTableViewCell: UITableViewCell {
     @IBOutlet private weak var titleLabel: UILabel!
     @IBOutlet private weak var pictureImageView: ProfilePictureView!
     @IBOutlet private weak var conversationTypeImageView: UIImageView!

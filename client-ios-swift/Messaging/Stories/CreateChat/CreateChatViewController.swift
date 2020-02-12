@@ -15,7 +15,7 @@ protocol CreateChatViewOutput: AnyObject, ControllerLifeCycle {
     func createChatPressed()
 }
 
-class CreateChatViewController: ViewController, CreateChatViewInput {
+final class CreateChatViewController: ViewController, CreateChatViewInput {
     var output: CreateChatViewOutput!
     
     @IBOutlet weak var createButton: UIBarButtonItem!

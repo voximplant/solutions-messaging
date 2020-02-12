@@ -4,7 +4,7 @@
 
 import Foundation
 
-class ConversationInfoPresenter: Presenter, ConversationInfoViewOutput, ConversationInfoInteractorOutput, ConversationInfoRouterOutput, UserListOutput {
+final class ConversationInfoPresenter: Presenter, ConversationInfoViewOutput, ConversationInfoInteractorOutput, ConversationInfoRouterOutput, UserListOutput {
     weak var view: ConversationInfoViewInput?
     
     var interactor: ConversationInfoInteractorInput!

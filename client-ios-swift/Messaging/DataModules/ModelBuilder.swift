@@ -3,7 +3,7 @@
 */
 
 import Foundation
-import VoxImplant
+import VoxImplantSDK
 
 protocol ModelBuilderProtocol {
     func buildUser(from viUser: VIUser) -> User
@@ -31,7 +31,7 @@ protocol ModelBuilderProtocol {
     func buildConfig(for conversationModel: Conversation) -> VIConversationConfig
 }
 
-class ModelBuilder: ModelBuilderProtocol {
+final class ModelBuilder: ModelBuilderProtocol {
     // MARK: - User -
     func buildUser(from viUser: VIUser) -> User {
         let pictureName: String? = viUser.customData.image as String?

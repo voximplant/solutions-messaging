@@ -35,7 +35,7 @@ protocol ActiveConversationViewOutput: AnyObject, ControllerLifeCycle {
     func longTappedOnCell(at indexPath: IndexPath)
 }
 
-class ActiveConversationViewController: ViewController, ActiveConversationViewInput, UITableViewDelegate, UITextViewDelegate {
+final class ActiveConversationViewController: ViewController, ActiveConversationViewInput, UITableViewDelegate, UITextViewDelegate {
     var output: ActiveConversationViewOutput!
     
     @IBOutlet private weak var messagesTableView: ActiveConversationTableView!

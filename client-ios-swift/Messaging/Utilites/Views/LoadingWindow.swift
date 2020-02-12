@@ -4,7 +4,7 @@
 
 import UIKit
 
-class LoadingWindow {
+final class LoadingWindow {
     private var topWindow: UIWindow? { return UIApplication.shared.windows.last }
     private let overlayView: UIView = {
         let view = UIView()

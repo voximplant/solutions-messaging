@@ -30,7 +30,7 @@ extension UserListOutput {
     func didUpdateList(with modelArray: [UserListCellModel]) { }
 }
 
-class UserListPresenter: UserListViewOutput {
+final class UserListPresenter: UserListViewOutput {
     weak var view: UserListViewInput?
     
     weak var userListOutput: UserListOutput?

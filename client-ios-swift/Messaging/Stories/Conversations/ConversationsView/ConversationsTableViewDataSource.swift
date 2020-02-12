@@ -7,7 +7,7 @@ import Foundation
 fileprivate let conversationsCellID = "ConversationsTableViewCell"
 fileprivate let conversationsNibName = "ConversationsTableViewCell"
 
-class ConversationsTableView: TableView {
+final class ConversationsTableView: TableView {
     override var cellID: String { return conversationsCellID }
     override var nibName: String { return conversationsNibName }
 }

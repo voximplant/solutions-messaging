@@ -21,7 +21,7 @@ protocol ConversationsInteractorOutput: AnyObject, ConnectionEvents {
     func fetchingFailed(with error: Error)
 }
 
-class ConversationsInteractor: ConversationsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class ConversationsInteractor: ConversationsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: ConversationsInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

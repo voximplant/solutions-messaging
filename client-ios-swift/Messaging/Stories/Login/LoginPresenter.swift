@@ -4,7 +4,7 @@
 
 import Foundation
 
-class LoginPresenter: Presenter, LoginViewOutput, LoginInteractorOutput {
+final class LoginPresenter: Presenter, LoginViewOutput, LoginInteractorOutput {
     weak var view: LoginViewInput!
     
     var interactor: LoginInteractorInput!

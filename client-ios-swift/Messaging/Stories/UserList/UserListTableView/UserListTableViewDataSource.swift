@@ -7,7 +7,7 @@ import UIKit
 fileprivate let userListCellID = "UserListCell"
 fileprivate let userListNibName = "UserListCell"
 
-class UserListTableView: TableView {
+final class UserListTableView: TableView {
     override var cellID: String { return userListCellID }
     override var nibName: String { return userListNibName }
     
@@ -22,7 +22,7 @@ class UserListTableView: TableView {
     var allowsEditing: Bool = false
 }
 
-class UserListTableViewDataSource<Model>: TableViewDataSource<Model> {
+final class UserListTableViewDataSource<Model>: TableViewDataSource<Model> {
     @objc(tableView:canEditRowAtIndexPath:)
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return (tableView as! UserListTableView).allowsEditing

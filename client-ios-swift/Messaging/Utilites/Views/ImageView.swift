@@ -10,7 +10,7 @@ class ImageView: UIImageView {
     }
 }
 
-class ProfilePictureView: ImageView, RoundViewProtocol {
+final class ProfilePictureView: ImageView, RoundViewProtocol {
     var isForUser: Bool = false
     var profileName: String?
     override var name: String? {

@@ -10,7 +10,7 @@ protocol MessageTableViewCellDelegate: AnyObject {
     func cancelButtonPressed(on cell: MessageTableViewCell)
 }
 
-class MessageTableViewCell: UITableViewCell {
+final class MessageTableViewCell: UITableViewCell {
     weak var delegate: MessageTableViewCellDelegate?
     
     @IBOutlet private weak var eventContainerView: UIView!
@@ -141,19 +141,19 @@ class MessageTableViewCell: UITableViewCell {
 }
     
 fileprivate extension VoxColor {
-    class var messageText: UIColor {
+    static var messageText: UIColor {
         if #available(iOS 13.0, *) { return UIColor.label }
         else { return .black }
     }
-    class var additionalMessageInfo: UIColor {
+    static var additionalMessageInfo: UIColor {
         if #available(iOS 13.0, *) { return UIColor.tertiaryLabel }
         else { return .lightGray }
     }
-    class var messageBackground: UIColor {
+    static var messageBackground: UIColor {
         if #available(iOS 13.0, *) { return UIColor.tertiarySystemGroupedBackground }
         else { return .lightGray }
     }
-    class var myMessageText: UIColor { return .white }
-    class var myAdditionalMessageInfo: UIColor { return #colorLiteral(red: 1, green: 1, blue: 1, alpha: 0.45) }
-    class var myMessageBackground: UIColor { return VoxColor.accent }
+    static var myMessageText: UIColor { return .white }
+    static var myAdditionalMessageInfo: UIColor { return #colorLiteral(red: 1, green: 1, blue: 1, alpha: 0.45) }
+    static var myMessageBackground: UIColor { return VoxColor.accent }
 }

@@ -9,7 +9,7 @@ enum ServiceEventAction {
     case typing
 }
 
-class ServiceEvent {
+final class ServiceEvent {
     let initiator: User
     let action: ServiceEventAction
     let sequence: Int

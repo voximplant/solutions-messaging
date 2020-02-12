@@ -8,7 +8,7 @@ protocol CreateDirectConfiguratorProtocol: AnyObject {
     func configure(with viewController: CreateDirectViewController)
 }
 
-class CreateDirectConfigurator: CreateDirectConfiguratorProtocol {
+final class CreateDirectConfigurator: CreateDirectConfiguratorProtocol {
     func configure(with viewController: CreateDirectViewController) {
         let presenter = CreateDirectPresenter(view: viewController)
         let interactor = CreateDirectInteractor(output: presenter)

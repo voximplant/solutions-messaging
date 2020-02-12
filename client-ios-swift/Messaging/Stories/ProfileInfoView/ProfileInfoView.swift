@@ -31,7 +31,7 @@ enum ProfileType {
 }
 
 @IBDesignable
-class ProfileInfoView: UIView, NibLoadable, PictureSelectorViewDelegate {
+final class ProfileInfoView: UIView, NibLoadable, PictureSelectorViewDelegate {
     @IBOutlet weak var profileImageView: ProfilePictureView!
     @IBOutlet private weak var changePictureButton: RoundButton!
     

@@ -13,7 +13,7 @@ protocol PermissionsRouterOutput: AnyObject {
     func requestConversationModel() -> Conversation
 }
 
-class PermissionsRouter: NSObject, PermissionsRouterInput, UINavigationControllerDelegate {
+final class PermissionsRouter: NSObject, PermissionsRouterInput, UINavigationControllerDelegate {
     weak var viewController: PermissionsViewController?
     weak var output: PermissionsRouterOutput?
     

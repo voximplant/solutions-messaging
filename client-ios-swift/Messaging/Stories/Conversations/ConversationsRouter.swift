@@ -11,7 +11,7 @@ protocol ConversationsRouterInput: AnyObject {
     func showLoginStory()
 }
 
-class ConversationsRouter: ConversationsRouterInput {
+final class ConversationsRouter: ConversationsRouterInput {
     weak var viewController: ConversationsViewController?
     
     init(viewController: ConversationsViewController) { self.viewController = viewController }

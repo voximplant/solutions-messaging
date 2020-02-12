@@ -5,7 +5,7 @@
 import UIKit
 
 @IBDesignable
-class GrayButton: UIButton {
+final class GrayButton: UIButton {
     private var pressed = false {
         didSet {
             UIView.transition(with: self, duration: 0.2, options: [.allowUserInteraction, .transitionCrossDissolve], animations:

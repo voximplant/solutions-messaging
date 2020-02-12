@@ -19,7 +19,7 @@ protocol CreateDirectInteractorOutput: AnyObject, ConnectionEvents {
     func didEdit(user: User)
 }
 
-class CreateDirectInteractor: CreateDirectInteractorInput, RepositoryDelegate, AuthServiceDelegate {    
+final class CreateDirectInteractor: CreateDirectInteractorInput, RepositoryDelegate, AuthServiceDelegate {    
     weak var output: CreateDirectInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

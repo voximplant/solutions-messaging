@@ -4,7 +4,7 @@
 
 import Foundation
 
-class ConversationsPresenter: Presenter, ConversationsViewOutput, ConversationsInteractorOutput {
+final class ConversationsPresenter: Presenter, ConversationsViewOutput, ConversationsInteractorOutput {
     private weak var view: ConversationsViewInput?
     
     var interactor: ConversationsInteractorInput!

@@ -14,7 +14,7 @@ protocol PermissionsViewOutput: AnyObject, ControllerLifeCycle {
     func barButtonPressed()
 }
 
-class PermissionsViewController: ViewController, PermissionsViewInput, UITableViewDelegate {
+final class PermissionsViewController: ViewController, PermissionsViewInput, UITableViewDelegate {
     var output: PermissionsViewOutput!
     
     @IBOutlet private weak var saveButton: BarButtonItem!

@@ -8,7 +8,7 @@ protocol SettingsRouterInput: AnyObject {
     func showLoginStory()
 }
 
-class SettingsRouter: SettingsRouterInput {
+final class SettingsRouter: SettingsRouterInput {
     weak var viewController: SettingsViewController!
     
     init(viewController: SettingsViewController) { self.viewController = viewController }    

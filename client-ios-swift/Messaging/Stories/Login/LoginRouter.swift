@@ -8,7 +8,7 @@ protocol LoginRouterInput: AnyObject {
     func showConversationsStory()
 }
 
-class LoginRouter: LoginRouterInput {
+final class LoginRouter: LoginRouterInput {
     weak var viewController: LoginViewController?
     
     init(viewController: LoginViewController) { self.viewController = viewController }

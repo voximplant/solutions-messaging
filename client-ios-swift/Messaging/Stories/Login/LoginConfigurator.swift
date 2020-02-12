@@ -8,7 +8,7 @@ protocol LoginConfiguratorProtocol: AnyObject {
     func configure(with viewController: LoginViewController)
 }
 
-class LoginConfigurator: LoginConfiguratorProtocol {
+final class LoginConfigurator: LoginConfiguratorProtocol {
     func configure(with viewController: LoginViewController) {
         let presenter = LoginPresenter(view: viewController)
         let interactor = LoginInteractor(output: presenter)

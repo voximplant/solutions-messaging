@@ -3,7 +3,7 @@
 */
 
 import Foundation
-import VoxImplant
+import VoxImplantSDK
 
 typealias VIUserCompletion                 = (Result<VIUser, Error>)              -> Void
 typealias UserCompletion                   = (Result<User, Error>)                -> Void

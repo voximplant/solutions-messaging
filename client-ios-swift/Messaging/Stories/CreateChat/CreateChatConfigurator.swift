@@ -8,7 +8,7 @@ protocol CreateChatConfiguratorProtocol: AnyObject {
     func configure(with viewController: CreateChatViewController, and type: ConversationType, users: [User])
 }
 
-class CreateChatConfigurator: CreateChatConfiguratorProtocol {
+final class CreateChatConfigurator: CreateChatConfiguratorProtocol {
     func configure(with viewController: CreateChatViewController, and type: ConversationType, users: [User]) {
         let presenter = CreateChatPresenter(view: viewController, users: users)
         let interactor = CreateChatInteractor(output: presenter)

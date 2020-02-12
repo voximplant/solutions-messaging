@@ -4,7 +4,7 @@
 
 import UIKit
 
-class DescriptionTextView: UITextView, UITextViewDelegate {
+final class DescriptionTextView: UITextView, UITextViewDelegate {
     var placeholderText: String?
     var descriptionText: String? {
         get {
@@ -66,12 +66,12 @@ class DescriptionTextView: UITextView, UITextViewDelegate {
 }
 
 fileprivate extension VoxColor {
-    class var placeholderColor: UIColor {
+    static var placeholderColor: UIColor {
         if #available(iOS 13.0, *) { return UIColor.placeholderText }
         else { return UIColor.lightGray }
     }
     
-    class var textColor: UIColor {
+    static var textColor: UIColor {
         if #available(iOS 13.0, *) { return UIColor.label }
         else { return UIColor.black }
     }

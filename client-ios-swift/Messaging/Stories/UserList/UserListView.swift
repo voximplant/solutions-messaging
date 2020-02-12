@@ -19,7 +19,7 @@ protocol UserListViewOutput: UserListInput {
     func didEditRow(at indexPath: IndexPath)
 }
 
-class UserListView: UIView, NibLoadable, UserListViewInput, UserListTableViewDelegate {
+final class UserListView: UIView, NibLoadable, UserListViewInput, UserListTableViewDelegate {
     var presenter: UserListViewOutput!
     
     @IBOutlet private weak var tableView: UserListTableView!

@@ -4,7 +4,7 @@
 
 import UIKit
 
-class LoadingView: UIView, NibLoadable {
+final class LoadingView: UIView, NibLoadable {
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var contentView: UIView!

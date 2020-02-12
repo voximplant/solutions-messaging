@@ -8,7 +8,7 @@ protocol ParticipantsConfiguratorProtocol: AnyObject {
     func configure(with viewController: ParticipantsViewController, and type: ParticipantsModuleType)
 }
 
-class ParticipantsConfigurator: ParticipantsConfiguratorProtocol {
+final class ParticipantsConfigurator: ParticipantsConfiguratorProtocol {
     func configure(with viewController: ParticipantsViewController, and type: ParticipantsModuleType) {
         let presenter = ParticipantsPresenter(view: viewController, type: type)
         let interactor = ParticipantsInteractor(output: presenter)

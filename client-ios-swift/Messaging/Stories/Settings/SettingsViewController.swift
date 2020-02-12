@@ -16,7 +16,7 @@ protocol SettingsViewOutput: AnyObject, ControllerLifeCycle {
     func saveButtonPressed()
 }
 
-class SettingsViewController: ViewController, SettingsViewInput {
+final class SettingsViewController: ViewController, SettingsViewInput {
     var output: SettingsViewOutput!
     
     @IBOutlet weak var profileHeaderView: ProfileInfoView!

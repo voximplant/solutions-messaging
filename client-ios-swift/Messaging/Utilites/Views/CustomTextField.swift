@@ -6,7 +6,7 @@ import UIKit
 
 fileprivate let placeholderColorKey = "placeholderLabel.textColor"
 
-class CustomTextField: UITextField {
+final class CustomTextField: UITextField {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()

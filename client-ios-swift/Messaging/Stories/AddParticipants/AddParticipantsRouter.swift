@@ -13,7 +13,7 @@ protocol AddParticipantsRouterOutput: AnyObject {
     func requestConversationModel() -> Conversation
 }
 
-class AddParticipantsRouter: NSObject, AddParticipantsRouterInput, UINavigationControllerDelegate {
+final class AddParticipantsRouter: NSObject, AddParticipantsRouterInput, UINavigationControllerDelegate {
     weak var viewController: AddParticipantsViewController?
     weak var output: AddParticipantsRouterOutput?
     

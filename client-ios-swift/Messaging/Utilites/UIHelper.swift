@@ -4,9 +4,9 @@
 
 import UIKit
 
-class UIHelper {    
+final class UIHelper {    
     // MARK: Show errors methods
-    class func ShowError(error: String, action: UIAlertAction? = nil, controller: UIViewController? = nil) {
+    static func ShowError(error: String, action: UIAlertAction? = nil, controller: UIViewController? = nil) {
         DispatchQueue.main.async {
             if let rootViewController = UIApplication.shared.keyWindow?.rootViewController  {
                 
@@ -30,7 +30,7 @@ class UIHelper {
     // MARK: - Loading HUD Methods
     private static let loadingWindow = LoadingWindow()
     
-    class func showLoading(with title: String) { loadingWindow.showLoading(with: title) }
+    static func showLoading(with title: String) { loadingWindow.showLoading(with: title) }
     
-    class func hideLoading() { loadingWindow.hideLoading() }
+    static func hideLoading() { loadingWindow.hideLoading() }
 }

@@ -9,7 +9,7 @@ protocol CreateDirectRouterInput: AnyObject {
     func showConversationScreen(with conversation: Conversation)
 }
 
-class CreateDirectRouter: CreateDirectRouterInput {
+final class CreateDirectRouter: CreateDirectRouterInput {
     
     weak var viewController: CreateDirectViewController!
     

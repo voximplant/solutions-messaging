@@ -8,7 +8,7 @@ protocol ConversationInfoConfiguratorProtocol {
     func configure(with viewController: ConversationInfoViewController, and conversation: Conversation)
 }
 
-class ConversationInfoConfigurator: ConversationInfoConfiguratorProtocol {
+final class ConversationInfoConfigurator: ConversationInfoConfiguratorProtocol {
     func configure(with viewController: ConversationInfoViewController, and conversation: Conversation) {
         let presenter = ConversationInfoPresenter(view: viewController, conversation: conversation)
         let interactor = ConversationInfoInteractor(output: presenter)

@@ -37,7 +37,7 @@ protocol ActiveConversationInteractorOutput: AnyObject, ConnectionEvents {
     func isConversationUUIDEqual(to UUID: String) -> Bool
 }
 
-class ActiveConversationInteractor: ActiveConversationInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class ActiveConversationInteractor: ActiveConversationInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: ActiveConversationInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

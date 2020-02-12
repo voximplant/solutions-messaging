@@ -10,7 +10,7 @@ struct UserListCellModel {
     var isChoosen: Bool
 }
 
-class UserListCell: UITableViewCell {
+final class UserListCell: UITableViewCell {
     @IBOutlet private weak var userPictureImageView: ProfilePictureView!
     @IBOutlet private weak var username: UILabel!
     

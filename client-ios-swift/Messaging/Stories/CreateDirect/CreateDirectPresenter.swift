@@ -4,7 +4,7 @@
 
 import Foundation
 
-class CreateDirectPresenter: Presenter, CreateDirectViewOutput, CreateDirectInteractorOutput, UserListOutput {
+final class CreateDirectPresenter: Presenter, CreateDirectViewOutput, CreateDirectInteractorOutput, UserListOutput {
     weak var view: CreateDirectViewInput?
 
     var interactor: CreateDirectInteractorInput!

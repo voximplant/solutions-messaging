@@ -14,7 +14,7 @@ protocol AddParticipantsViewOutput: AnyObject, ControllerLifeCycle {
     func addButtonPressed()
 }
 
-class AddParticipantsViewController: ViewController, AddParticipantsViewInput {
+final class AddParticipantsViewController: ViewController, AddParticipantsViewInput {
     var output: AddParticipantsViewOutput!
         
     @IBOutlet private weak var addButton: UIBarButtonItem!

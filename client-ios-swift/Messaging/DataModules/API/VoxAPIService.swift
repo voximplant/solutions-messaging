@@ -8,7 +8,7 @@ protocol APIService {
     func getVoxUsernames(completion: @escaping (Result<[String], Error>) -> Void)
 }
 
-class VoxAPIService: APIService {
+final class VoxAPIService: APIService {
     #error ("Enter backend adress")
     private let requestLink = ""
     private var requestURL: URL { return URL(string: requestLink)! }
@@ -34,12 +34,12 @@ class VoxAPIService: APIService {
     }
 }
 
-fileprivate class JSONParser {
+fileprivate final class JSONParser {
     static let resultKey = "result"
     static let countKey = "count"
     static let usernameKey = "user_name"
     
-    class func parse(data: Data)  -> [String]? {
+    static func parse(data: Data)  -> [String]? {
         do {
             guard let json = try JSONSerialization.jsonObject (with: data, options: .mutableContainers) as? [String : Any],
                   let result = json[resultKey] as? [[String : Any]],

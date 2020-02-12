@@ -8,7 +8,7 @@ protocol PermissionsConfiguratorProtocol {
     func configure(with viewController: PermissionsViewController, and conversation: Conversation)
 }
 
-class PermissionsConfigurator: PermissionsConfiguratorProtocol {
+final class PermissionsConfigurator: PermissionsConfiguratorProtocol {
     func configure(with viewController: PermissionsViewController, and conversation: Conversation) {
         let presenter = PermissionsPresenter(view: viewController, conversation: conversation)
         let interactor = PermissionsInteractor(output: presenter)

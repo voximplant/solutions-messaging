@@ -4,7 +4,7 @@
 
 import Foundation
 
-class SettingsPresenter: Presenter, SettingsViewOutput, SettingsInteractorOutput {
+final class SettingsPresenter: Presenter, SettingsViewOutput, SettingsInteractorOutput {
     weak var view: SettingsViewInput?
     
     var interactor: SettingsInteractorInput!

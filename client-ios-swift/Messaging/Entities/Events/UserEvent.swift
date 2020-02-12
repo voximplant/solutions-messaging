@@ -8,7 +8,7 @@ enum UserEventAction {
     case editUser
 }
 
-class UserEvent {
+final class UserEvent {
     let initiator: User
     let action: UserEventAction
     

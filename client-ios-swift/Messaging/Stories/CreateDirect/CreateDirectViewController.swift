@@ -13,7 +13,7 @@ protocol CreateDirectViewOutput: AnyObject, ControllerLifeCycle {
     func groupChatButtonPressed()
 }
 
-class CreateDirectViewController: ViewController, CreateDirectViewInput {
+final class CreateDirectViewController: ViewController, CreateDirectViewInput {
     var output: CreateDirectViewOutput!
     
     @IBOutlet weak var userListView: UserListView!

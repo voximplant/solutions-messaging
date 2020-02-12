@@ -5,7 +5,7 @@
 import UIKit
 
 @IBDesignable
-class SeparatedView: UIView, NibLoadable {
+final class SeparatedView: UIView, NibLoadable {
     @IBOutlet private weak var iconView: UIImageView!
     @IBInspectable private var icon: UIImage? {
         get { return iconView.image }

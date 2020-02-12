@@ -3,7 +3,7 @@
 */
 
 import Foundation
-import VoxImplant
+import VoxImplantSDK
 
 #error ("Enter Voximplant account credentials")
 let appName = "appName"
@@ -17,7 +17,7 @@ protocol VoximplantServiceDelegate: AnyObject {
     func didReceive(userEvent: VIUserEvent)
 }
 
-class VoximplantService: NSObject, VIMessengerDelegate, MessagingDataSource {
+final class VoximplantService: NSObject, VIMessengerDelegate, MessagingDataSource {
     private weak var delegate: VoximplantServiceDelegate?
     
     private let messenger: VIMessenger

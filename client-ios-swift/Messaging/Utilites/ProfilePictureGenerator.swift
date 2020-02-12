@@ -13,16 +13,16 @@ func floorToScreenPixels(_ value: CGFloat) -> CGFloat {
 import Foundation
 import UIKit
 
-public class ProfilePictureGenerator {
+public final class ProfilePictureGenerator {
     
-    class func generatePicture(with imageName: String?, and title: String, for bounds: CGRect) -> UIImage {
+    static func generatePicture(with imageName: String?, and title: String, for bounds: CGRect) -> UIImage {
         if let imageName = imageName,
             let image = UIImage(named: imageName)
         { return image }
         else { return generateImage(bounds, with: title) }
     }
     
-    class var randomColor: UIColor {
+    static var randomColor: UIColor {
         let colors = [#colorLiteral(red: 0.5568627715, green: 0.3529411852, blue: 0.9686274529, alpha: 1), #colorLiteral(red: 0.3647058904, green: 0.06666667014, blue: 0.9686274529, alpha: 1),  #colorLiteral(red: 0.1764705926, green: 0.4980392158, blue: 0.7568627596, alpha: 1),  #colorLiteral(red: 0.9372549057, green: 0.3490196168, blue: 0.1921568662, alpha: 1),  #colorLiteral(red: 0.9607843161, green: 0.7058823705, blue: 0.200000003, alpha: 1),  #colorLiteral(red: 0.3411764801, green: 0.6235294342, blue: 0.1686274558, alpha: 1),  #colorLiteral(red: 0.1215686277, green: 0.01176470611, blue: 0.4235294163, alpha: 1),  #colorLiteral(red: 0.8078431487, green: 0.02745098062, blue: 0.3333333433, alpha: 1)]
         let random = Int(arc4random_uniform(UInt32(colors.count)))
         return colors[random]
@@ -32,7 +32,7 @@ public class ProfilePictureGenerator {
         return UIFont.systemFont(ofSize: bounds.height / 2, weight: .bold)
     }
     
-    public class func generateImage(_ bounds: CGRect, with letters: String, color: UIColor? = nil) -> UIImage {
+    public static func generateImage(_ bounds: CGRect, with letters: String, color: UIColor? = nil) -> UIImage {
         let originalBounds = bounds
         
         let bounds = CGRect(x: 0,
@@ -90,7 +90,7 @@ public class ProfilePictureGenerator {
         return image
     }
     
-    public class func generateSolidImage(of color: UIColor, with size: CGSize) -> UIImage {
+    public static func generateSolidImage(of color: UIColor, with size: CGSize) -> UIImage {
         
         let bounds = CGRect(x: 0,
                             y: 0,

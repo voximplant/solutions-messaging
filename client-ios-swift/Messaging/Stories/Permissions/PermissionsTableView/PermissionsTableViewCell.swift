@@ -14,7 +14,7 @@ struct PermissionsCellModel {
     var delegate: PermissionSwitchDelegate
 }
 
-class PermissionsTableViewCell: UITableViewCell {
+final class PermissionsTableViewCell: UITableViewCell {
     weak var delegate: PermissionSwitchDelegate?
     
     @IBOutlet weak var nameLabel: UILabel!

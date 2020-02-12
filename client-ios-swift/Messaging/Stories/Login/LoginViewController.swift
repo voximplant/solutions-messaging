@@ -15,7 +15,7 @@ protocol LoginViewOutput: AnyObject, ControllerLifeCycle {
     func loginButtonPressed()
 }
 
-class LoginViewController: ViewController, LoginViewInput {
+final class LoginViewController: ViewController, LoginViewInput {
     var output: LoginViewOutput!
     
     @IBOutlet private weak var userField: CustomTextField!

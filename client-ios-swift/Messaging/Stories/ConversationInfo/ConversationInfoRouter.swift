@@ -17,7 +17,7 @@ protocol ConversationInfoRouterOutput: AnyObject {
     func requestConversation() -> Conversation
 }
 
-class ConversationInfoRouter: NSObject, ConversationInfoRouterInput, UINavigationControllerDelegate {
+final class ConversationInfoRouter: NSObject, ConversationInfoRouterInput, UINavigationControllerDelegate {
     weak var viewController: ConversationInfoViewController?
     weak var output: ConversationInfoRouterOutput?
     

@@ -9,7 +9,7 @@ protocol ActiveConversationRouterInput: AnyObject {
     func showConversationsScreen(with conversation: Conversation)
 }
 
-class ActiveConversationRouter: ActiveConversationRouterInput {
+final class ActiveConversationRouter: ActiveConversationRouterInput {
     weak var viewController: ActiveConversationViewController?
     
     init(viewController: ActiveConversationViewController) { self.viewController = viewController }

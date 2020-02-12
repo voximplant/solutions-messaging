@@ -21,7 +21,7 @@ protocol PermissionsInteractorOutput: AnyObject, ConnectionEvents {
     func messageEventReceived()
 }
 
-class PermissionsInteractor: PermissionsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class PermissionsInteractor: PermissionsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: PermissionsInteractorOutput?
     
     var me: User { return repository.me! }

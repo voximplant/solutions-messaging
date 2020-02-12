@@ -17,7 +17,7 @@ protocol SettingsInteractorOutput: AnyObject, ConnectionEvents {
     func userEditSuccess()
 }
 
-class SettingsInteractor: SettingsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class SettingsInteractor: SettingsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: SettingsInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

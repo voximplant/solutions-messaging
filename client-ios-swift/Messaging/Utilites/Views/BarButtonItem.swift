@@ -9,7 +9,7 @@ enum BarButtonAction {
     case save
 }
 
-class BarButtonItem: UIBarButtonItem {
+final class BarButtonItem: UIBarButtonItem {
     var buttonAction: BarButtonAction? {
         didSet {
             switch buttonAction {
@@ -30,7 +30,7 @@ class BarButtonItem: UIBarButtonItem {
 }
 
 fileprivate extension VoxColor {
-    class var labelColor: UIColor {
+    static var labelColor: UIColor {
         if #available(iOS 13.0, *) { return UIColor.label }
         else { return .black }
     }

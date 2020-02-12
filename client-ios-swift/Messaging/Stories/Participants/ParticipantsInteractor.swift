@@ -26,7 +26,7 @@ protocol ParticipantsInteractorOutput: AnyObject, ConnectionEvents {
     func messageEventReceived()
 }
 
-class ParticipantsInteractor: ParticipantsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class ParticipantsInteractor: ParticipantsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: ParticipantsInteractorOutput?
     
     var me: User { return repository.me! }

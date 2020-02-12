@@ -7,7 +7,7 @@ import Foundation
 fileprivate let selectorCellID = "PictureSelectorViewCollectionViewCell"
 fileprivate let selectorNibName = "PictureSelectorViewCollectionViewCell"
 
-class PictureSelectorViewCollectionView: CollectionView {
+final class PictureSelectorViewCollectionView: CollectionView {
     override var cellID: String { return selectorCellID }
     override var nibName: String { return selectorNibName }
 }

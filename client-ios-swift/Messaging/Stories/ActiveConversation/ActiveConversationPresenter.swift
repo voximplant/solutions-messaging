@@ -4,7 +4,7 @@
 
 import Foundation
 
-class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput, ActiveConversationInteractorOutput, MessageTableViewCellDelegate {
+final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput, ActiveConversationInteractorOutput, MessageTableViewCellDelegate {
     private weak var view: ActiveConversationViewInput?
 
     var interactor: ActiveConversationInteractorInput!

@@ -4,7 +4,7 @@
 
 import UIKit
 
-class RoundBarButtonItemWithActivity: UIBarButtonItem {
+final class RoundBarButtonItemWithActivity: UIBarButtonItem {
     private let frame = CGRect(x: 0, y: 0, width: 35, height: 35)
     private let transform = CGAffineTransform(translationX: 10, y: 0)
     private (set) var activityIndicator: UIActivityIndicatorView!

@@ -10,7 +10,7 @@ enum MessageEventAction {
     case remove
 }
 
-class MessageEvent {
+final class MessageEvent {
     let initiator: User
     var action: MessageEventAction
     let sequence: Int

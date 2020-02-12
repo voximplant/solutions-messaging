@@ -29,7 +29,7 @@ protocol AddParticipantsInteractorOutput: AnyObject, ConnectionEvents {
     func messageEventReceived()
 }
 
-class AddParticipantsInteractor: AddParticipantsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class AddParticipantsInteractor: AddParticipantsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: AddParticipantsInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

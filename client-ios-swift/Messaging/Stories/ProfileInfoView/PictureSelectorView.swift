@@ -9,7 +9,7 @@ protocol PictureSelectorViewDelegate: AnyObject {
     func didPressSaveButton(with imageName: String)
 }
 
-class PictureSelectorView: UIView, NibLoadable, UICollectionViewDelegate {
+final class PictureSelectorView: UIView, NibLoadable, UICollectionViewDelegate {
     weak var delegate: PictureSelectorViewDelegate?
     
     @IBOutlet weak var backgroundView: UIView!

@@ -4,7 +4,7 @@
 
 import UIKit
 
-class ButtonWithIndicator: Button {
+final class ButtonWithIndicator: Button {
     private var activityIndicator: UIActivityIndicatorView!
     
     override func sharedInit() {

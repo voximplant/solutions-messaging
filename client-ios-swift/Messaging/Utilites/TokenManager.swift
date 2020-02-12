@@ -8,13 +8,13 @@ typealias Keys = (access: Token, refresh: Token)
 fileprivate let userDefaults = UserDefaults.standard
 
 extension UIApplication {
-    class var errorDomain: String {
+    static var errorDomain: String {
         return Bundle.main.bundleIdentifier!
     }
 }
 
 extension UIApplication {
-    class var userDefaultsDomain: String {
+    static var userDefaultsDomain: String {
         return Bundle.main.bundleIdentifier!
     }
 }
@@ -40,7 +40,7 @@ fileprivate extension UserDefaults {
     }
 }
 
-class TokenManager {
+final class TokenManager {
     var keys: Keys? {
         get {
             guard let accessKey = userDefaults.token(forKey: "access"),
@@ -57,7 +57,7 @@ class TokenManager {
     func removeKeys() { keys = nil }
 }
 
-class Token {
+final class Token {
     private(set) var token: String
     private(set) var expireDate: Date
     var isExpired: Bool { return Date() > expireDate }

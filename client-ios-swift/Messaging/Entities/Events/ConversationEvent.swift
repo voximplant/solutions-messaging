@@ -15,7 +15,7 @@ enum ConversationEventAction {
     case removeConversation
 }
 
-class ConversationEvent {
+final class ConversationEvent {
     let initiator: User
     let action: ConversationEventAction
     let sequence: Int

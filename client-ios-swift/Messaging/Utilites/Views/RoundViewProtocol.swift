@@ -13,7 +13,7 @@ extension RoundViewProtocol {
     }
 }
 
-class RoundView: UIView, RoundViewProtocol {
+final class RoundView: UIView, RoundViewProtocol {
     override init(frame: CGRect) {
         super.init(frame: frame)
         sharedInit()
@@ -25,7 +25,7 @@ class RoundView: UIView, RoundViewProtocol {
     }
 }
 
-class RoundImageView: ImageView, RoundViewProtocol {
+final class RoundImageView: ImageView, RoundViewProtocol {
     override init(frame: CGRect) {
         super.init(frame: frame)
         sharedInit()
@@ -37,7 +37,7 @@ class RoundImageView: ImageView, RoundViewProtocol {
     }
 }
 
-class RoundButton: UIButton, RoundViewProtocol {
+final class RoundButton: UIButton, RoundViewProtocol {
     override init(frame: CGRect) {
         super.init(frame: frame)
         sharedInit()

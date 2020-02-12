@@ -3,9 +3,9 @@
 */
 
 import Foundation
-import VoxImplant
+import VoxImplantSDK
 
-class CoreDataManager: MessagingDataSource {
+final class CoreDataManager: MessagingDataSource {
     var me: VIUser?
     
     func requestMe(completion: @escaping VIUserCompletion) {

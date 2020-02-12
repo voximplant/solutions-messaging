@@ -4,7 +4,7 @@
 
 import Foundation
 
-class MessageCellModel {
+final class MessageCellModel {
     let sequence: Int
     let time: String
     var text: String
@@ -26,7 +26,7 @@ class MessageCellModel {
     }
 }
 
-class EventCellModel {
+final class EventCellModel {
     let sequence: Int
     let initiatorName: String
     let text: String

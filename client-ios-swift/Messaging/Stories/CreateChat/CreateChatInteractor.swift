@@ -20,7 +20,7 @@ protocol CreateChatInteractorOutput: AnyObject, ConnectionEvents {
     func didEdit(user: User)
 }
 
-class CreateChatInteractor: CreateChatInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class CreateChatInteractor: CreateChatInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: CreateChatInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

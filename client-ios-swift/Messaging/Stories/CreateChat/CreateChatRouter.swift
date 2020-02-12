@@ -8,7 +8,7 @@ protocol CreateChatRouterInput: AnyObject {
     func showConversationScreen(with conversation: Conversation)
 }
 
-class CreateChatRouter: CreateChatRouterInput {
+final class CreateChatRouter: CreateChatRouterInput {
     weak var viewController: CreateChatViewController!
     
     init(viewController: CreateChatViewController) { self.viewController = viewController }

@@ -4,7 +4,7 @@
 
 import Foundation
 
-class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsInteractorOutput, PermissionsRouterOutput, PermissionSwitchDelegate {
+final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsInteractorOutput, PermissionsRouterOutput, PermissionSwitchDelegate {
     weak var view: PermissionsViewInput?
     
     var interactor: PermissionsInteractorInput!

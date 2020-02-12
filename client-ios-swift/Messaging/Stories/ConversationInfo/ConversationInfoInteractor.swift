@@ -26,7 +26,7 @@ protocol ConversationInfoInteractorOutput: AnyObject, ConnectionEvents {
     func messageEventReceived()
 }
 
-class ConversationInfoInteractor: ConversationInfoInteractorInput, RepositoryDelegate, AuthServiceDelegate {
+final class ConversationInfoInteractor: ConversationInfoInteractorInput, RepositoryDelegate, AuthServiceDelegate {
     weak var output: ConversationInfoInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

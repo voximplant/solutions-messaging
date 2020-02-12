@@ -16,7 +16,7 @@ protocol LoginInteractorOutput: AnyObject, ConnectionEvents {
     func loginCompleted()
 }
 
-class LoginInteractor: LoginInteractorInput, AuthServiceDelegate {
+final class LoginInteractor: LoginInteractorInput, AuthServiceDelegate {
     weak var output: LoginInteractorOutput?
     
     private let authService: AuthServiceProtocol = sharedAuthService

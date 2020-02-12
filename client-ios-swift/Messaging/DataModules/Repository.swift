@@ -3,9 +3,9 @@
 */
 
 import Foundation
-import VoxImplant
+import VoxImplantSDK
 
-class MessagingRepository: Repository, VoximplantServiceDelegate {
+final class MessagingRepository: Repository, VoximplantServiceDelegate {
     private weak var delegate: RepositoryDelegate?
     
     private let voxAPIService: APIService = VoxAPIService()

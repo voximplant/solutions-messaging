@@ -7,7 +7,7 @@ import Foundation
 fileprivate let PermissionsCellID = "PermissionsTableViewCell"
 fileprivate let PermissionsNibName = "PermissionsTableViewCell"
 
-class PermissionsTableView: TableView {
+final class PermissionsTableView: TableView {
     override var cellID: String { return PermissionsCellID }
     override var nibName: String { return PermissionsNibName }
 }

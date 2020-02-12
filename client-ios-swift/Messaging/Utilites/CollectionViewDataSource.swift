@@ -4,7 +4,7 @@
 
 import UIKit
 
-class CollectionViewDataSource<Model>: NSObject, UICollectionViewDataSource {
+final class CollectionViewDataSource<Model>: NSObject, UICollectionViewDataSource {
     typealias CellConfigurator = (Model, UICollectionViewCell) -> Void
 
     var models: [Model]
