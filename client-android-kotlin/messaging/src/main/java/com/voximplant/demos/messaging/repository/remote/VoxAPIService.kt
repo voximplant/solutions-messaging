@@ -49,7 +49,8 @@ class VoxAPIService {
     }
 
     private companion object {
-        private const val requestLink = "http://demo.phpstend.internal/"
+        // TODO: Enter backend URL
+        private const val requestLink = ""
 
         private fun parse(json: String): JSONObject? {
             return try {

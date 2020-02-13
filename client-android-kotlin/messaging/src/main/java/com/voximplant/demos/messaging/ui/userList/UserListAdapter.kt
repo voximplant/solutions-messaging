@@ -13,7 +13,7 @@ class UserListAdapter(private val onClickListener: UserListListener) :
 
     var multipleSelectionEnabled: Boolean = false
 
-    private var selectedRows: MutableList<Boolean> = mutableListOf()
+    private var selectedUsers: MutableMap<Long, Boolean> = mutableMapOf()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserListViewHolder {
         val view = parent.inflate(R.layout.user_list_adapter_view, false)
@@ -23,23 +23,27 @@ class UserListAdapter(private val onClickListener: UserListListener) :
     override fun onBindViewHolder(holder: UserListViewHolder, position: Int) {
         val user = getItem(position)
 
+
         holder.bind(user, this, multipleSelectionEnabled,
-            if (selectedRows.indices.contains(position)) {
-                selectedRows[position]
+            if (selectedUsers.contains(user.imId)) {
+                selectedUsers[user.imId] ?: false
             } else {
-                selectedRows.add(position, false)
+                selectedUsers[user.imId] = false
                 false
             }
         )
     }
 
     override fun onSelect(row: Int) {
-        if (selectedRows.indices.contains(row)) {
-            selectedRows[row] = !selectedRows[row]
+        val user = getItem(row)
+
+        if (selectedUsers.contains(user.imId)) {
+            selectedUsers[user.imId] = !(selectedUsers[user.imId] ?: true)
         } else {
-            selectedRows.add(row, false)
+            selectedUsers[user.imId] = false
         }
-        onClickListener.onSelect(getItem(row))
+
+        onClickListener.onSelect(user)
     }
 
     companion object {

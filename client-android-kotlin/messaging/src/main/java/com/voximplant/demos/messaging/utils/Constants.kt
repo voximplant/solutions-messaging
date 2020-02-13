@@ -2,8 +2,9 @@ package com.voximplant.demos.messaging.utils
 
 const val APP_TAG = "Voximplant"
 
-const val APP_NAME = "messaging"
-const val ACC_NAME = "mobiledev"
+// TODO: Enter account
+const val APP_NAME = "appname"
+const val ACC_NAME = "accname"
 const val VOX_DOMAIN = ".voximplant.com"
 
 const val POSTFIX = "@$APP_NAME.$ACC_NAME$VOX_DOMAIN"
