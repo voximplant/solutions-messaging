@@ -22,7 +22,7 @@
     "@types/ramda": "github:types/npm-ramda#dist",
     "@vue/cli-plugin-babel": "^3.11.0",
     "@vue/cli-plugin-typescript": "^3.11.0",
-    "@vue/cli-service": "^3.11.0",
+    "@vue/cli-service": "^4.2.2",
     "postcss-loader": "^3.0.0",
     "pug": "^2.0.3",
     "pug-plain-loader": "^1.0.0",
@@ -31,7 +31,7 @@
     "typescript": "^3.4.3",
     "vue-cli-plugin-vuetify": "^0.6.3",
     "vue-template-compiler": "^2.6.10",
-    "vuetify-loader": "^1.2.2"
+    "vuetify-loader": "^1.4.2"
   },
   "postcss": {
     "plugins": {
