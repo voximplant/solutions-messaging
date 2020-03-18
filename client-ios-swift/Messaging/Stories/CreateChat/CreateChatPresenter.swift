@@ -118,7 +118,7 @@ final class CreateChatPresenter: Presenter, CreateChatViewOutput, CreateChatInte
     }
     
     private func buildSelectedModelArray() -> [User]? {
-        guard let selectedUsers = userListInput?.userListModelArray
+        guard let selectedUsers = userListInput?.userListModels
             else { return nil }
         
         var selectedModels: [User] = []

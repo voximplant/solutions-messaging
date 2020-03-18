@@ -4,29 +4,53 @@
 
 import Foundation
 
-final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput, ActiveConversationInteractorOutput, MessageTableViewCellDelegate {
-    private weak var view: ActiveConversationViewInput?
+fileprivate typealias MessageCellConfigurator = TableCellConfigurator<MessageTableCell, MessageTableCellModel>
+fileprivate typealias EventCellConfigurator = TableCellConfigurator<EventTableCell, EventTableCellModel>
 
+final class ActiveConversationPresenter:
+    Presenter,
+    ActiveConversationViewOutput,
+    ActiveConversationInteractorOutput
+{
+    private weak var view: ActiveConversationViewInput?
     var interactor: ActiveConversationInteractorInput!
     var router: ActiveConversationRouterInput!
     
-    private var dataSource: TableViewDataSource<MessengerCellModel>!
-    private var cellModels: [MessengerCellModel] {
-        get { return dataSource.models }
-        set { dataSource.models = newValue }
+    private var dataSource: TableDataSource!
+    private var cellConfigurators: [CellConfigurator] {
+        get { dataSource?.items.first ?? [] }
+        set { dataSource?.items = [newValue] }
     }
     
     private var storedEvents: [MessengerEvent] = [] {
         didSet {
-            cellModels = storedEvents.compactMap { event in
-                if case .message (let messageEvent) = event {
-                    return MessengerCellModel.message(self.buildMessageCellModel(with: messageEvent))
+            cellConfigurators = storedEvents
+                .compactMap { event -> MessengerCellModel? in
+                    guard let myImId = interactor.me?.imID else { return nil }
+                    if case .message (let messageEvent) = event {
+                        let messageDialogViewOutput = MessageDialogViewOutput(
+                            editAction: editButtonPressed(on:with:),
+                            removeAction: removeButtonPressed(on:with:),
+                            cancelAction: cancelButtonPressed(on:with:)
+                        )
+                        return MessageTableCellModel(with: messageEvent, myImId: myImId, and: messageDialogViewOutput)
+                    }
+                    if case .conversation (let conversationEvent) = event {
+                        return EventTableCellModel(with: conversationEvent)
+                    }
+                    else { return nil }
+            }
+            .sorted { $0.sequence > $1.sequence }
+            .compactMap { cellModel -> CellConfigurator? in
+                switch cellModel {
+                case is MessageTableCellModel:
+                    return MessageCellConfigurator(model: cellModel as! MessageTableCellModel)
+                case is EventTableCellModel:
+                    return EventCellConfigurator(model: cellModel as! EventTableCellModel)
+                default:
+                    return nil
                 }
-                else if case .conversation (let conversationEvent) = event {
-                    return MessengerCellModel.event(self.buildEventModel(with: conversationEvent))
-                }
-                else { return nil }
-            }.sorted { $0.sequence > $1.sequence }
+            }
         }
     }
     
@@ -65,7 +89,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
     override func viewDidLoad() {
         guard let view = view else { return }
         
-        dataSource = .make(for: [], delegate: self)
+        dataSource = TableDataSource(items: [])
         
         view.updateTitle(with: buildTitle(for: conversation))
         view.updateRightBarButtonImage(with: buildPictureName(for: conversation), and: buildTitle(for: conversation))
@@ -85,15 +109,20 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
     
     override func viewDidAppear() {
         guard let view = view else { return }
+        
         if conversationUpdated {
-            view.showHUD(with: "Updating...")
-            interactor.requestMessengerEvents(for: conversation)
+            if updatingConversationCompletion == nil {
+                view.showHUD(with: "Updating...")
+                interactor.requestMessengerEvents(for: conversation)
+            }
         }
     }
     
     func didAppearAfterEditing(with conversation: Conversation) {
         self.conversation = conversation
     }
+    
+    private var updatingConversationCompletion: (() -> Void)?
     
     // MARK: - Actions
     func rightBarButtonPressed() {
@@ -112,21 +141,23 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
     }
     
     // MARK: - Cell Actions
-    func longTappedOnCell(at indexPath: IndexPath) {
+    func didLongTapCell(at indexPath: IndexPath) {
         guard let view = view else { return }
         
-        cellModels[indexPath.row].either(isMessage: { message in
-            if (self.meIsAdmin == true && self.type != .direct) || message.isMy {
-                view.showMessageOptions(at: indexPath)
+        view.deselectAllCells()
+        
+        if let configurator = cellConfigurators[indexPath.row] as? MessageCellConfigurator {
+            if ((meIsAdmin == true && type != .direct) || configurator.model.isMy) { // TODO Improve permissions usage
+                view.selectCell(at: indexPath)
             }
-        })
+        }
     }
     
-    func cancelButtonPressed(on cell: MessageTableViewCell) {
-        cell.isInEditMode = false
+    func cancelButtonPressed(on cell: MessageTableCell, with sequence: Int) {
+        cell.setSelected(false, animated: true)
     }
     
-    func removeButtonPressed(on cell: MessageTableViewCell, with sequence: Int) {
+    func removeButtonPressed(on cell: MessageTableCell, with sequence: Int) {
         guard let event = storedEvents
             .first(where: { $0.sequence == sequence }) else { return }
         
@@ -136,7 +167,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         })
     }
     
-    func editButtonPressed(on cell: MessageTableViewCell, with sequence: Int) {
+    func editButtonPressed(on cell: MessageTableCell, with sequence: Int) {
         guard let view = view else { return }
         
         guard let index = (storedEvents.firstIndex {
@@ -148,7 +179,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
             return false
         }) else { return }
         
-        cell.isInEditMode = false
+        cell.setSelected(false, animated: true)
         isInEditMessageMode = true
         
         storedEvents[index].either(isMessageEvent: {
@@ -158,7 +189,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         })
     }
     
-    func sendButtonPressed(with text: String) {
+    func sendTouchUp(with text: String) {
         guard let view = view else { return }
         
         view.showSending(true)
@@ -181,7 +212,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         }
     }
     
-    // MARK: - ActiveConversationInteractorOutput
+    // MARK: - ActiveConversationInteractorOutput -
     // MARK: - Message
     func messageSent(_ messageEvent: MessageEvent) {
         guard let view = view else { return }
@@ -190,6 +221,9 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         view.insertCell(at: IndexPath(row: 0, section: 0))
         conversation.lastSequence += 1
         view.showSending(false)
+        view.scrollToBottom()
+        
+        updatingConversationCompletion?()
     }
     
     func failedToSendMessage(with error: Error) {
@@ -204,6 +238,7 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         storedEvents.append(MessengerEvent.message(event))
         view.insertCell(at: IndexPath(row: 0, section: 0))
         conversation.lastSequence += 1
+        view.scrollToBottom()
         sendRead()
     }
     
@@ -372,13 +407,13 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         
         conversation.latestReadSequence = event.sequence
         
-        for (index, cell) in cellModels.enumerated() {
-            cell.either(isMessage: { message in
-                if message.sequence <= event.sequence {
-                    message.isRead = true
+        for (index, configurator) in cellConfigurators.enumerated() {
+            if let configurator = configurator as? MessageCellConfigurator {
+                if configurator.model.sequence <= event.sequence {
+                    configurator.model.isRead = true
                     view.setReadOnCell(at: IndexPath(row: index, section: 0))
                 }
-            })
+            }
         }
     }
     
@@ -496,69 +531,31 @@ final class ActiveConversationPresenter: Presenter, ActiveConversationViewOutput
         else { return conversation.pictureName }
     }
     
-    private let dateFormatter: DateFormatter = {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "HH:mm"
-        return dateFormatter
-    }()
-    
-    private func buildTime(from timeInterval: TimeInterval) -> String {
-        let time = Date(timeIntervalSince1970: timeInterval)
-        return dateFormatter.string(from: time)
-    }
-    
-    private func buildCurrentTime() -> String { return dateFormatter.string(from: Date()) }
-    
-    private func buildMessageCellModel(with event: MessageEvent) -> MessageCellModel {
-        let isMy = event.initiator.imID == interactor.me!.imID
-        let time = buildTime(from: event.timestamp)
-        let isEdited = event.action == .edit
-        
-        return MessageCellModel(sequence: event.message.sequence, time: time, text: event.message.text,
-                                          senderName: event.initiator.displayName, isMy: isMy, isEdited: isEdited)
-    }
-    
-    private func buildEventModel(with event: ConversationEvent) -> EventCellModel {
-        let initiatorName = event.initiator.displayName
-        var text = ""
-        switch event.action {
-        case .addParticipants    : text = "\(initiatorName) added participants"
-        case .removeParticipants : text = "\(initiatorName) removed participants"
-        case .editParticipants   : text = "\(initiatorName) edited participants"
-        case .editConversation   : text = "\(initiatorName) edited conversation"
-        case .createConversation : text = "\(initiatorName) created conversation"
-        case .joinConversation   : text = "\(initiatorName) joined conversation"
-        case .leaveConversation  : text = "\(initiatorName) left conversation"
-        case .removeConversation : text = "\(initiatorName) removed conversation"
-        }
-        return EventCellModel(sequence: event.sequence, initiatorName: initiatorName, text: text)
-    }
-    
     // MARK: - Read
-    private func sendRead() { // todo refactor
+    private func sendRead() {
         guard view != nil else { return }
         
-        cellModels.forEach { cellModel in
-            cellModel.either(isMessage: { message in
-                if !message.isMy && !message.isRead {
-                    if message.sequence < self.conversation.latestReadSequence { return }
-                    self.interactor.markAsRead(sequence: message.sequence, in: self.conversation)
-                    self.conversation.latestReadSequence = message.sequence
+        cellConfigurators.forEach { configurator in
+            if let configurator = configurator as? MessageCellConfigurator {
+                if !configurator.model.isMy && !configurator.model.isRead {
+                    if configurator.model.sequence < self.conversation.latestReadSequence { return }
+                    self.interactor.markAsRead(sequence: configurator.model.sequence, in: self.conversation)
+                    self.conversation.latestReadSequence = configurator.model.sequence
                 }
-            })
+            }
         }
     }
     
     private func checkRead() {
         guard let view = view else { return }
         
-        for (index, cell) in cellModels.enumerated() {
-            cell.either(isMessage: { message in
-                if message.sequence <= self.conversation.latestReadSequence {
-                    message.isRead = true
+        for (index, configurator) in cellConfigurators.enumerated() {
+            if let configurator = configurator as? MessageCellConfigurator {
+                if configurator.model.sequence <= self.conversation.latestReadSequence {
+                    configurator.model.isRead = true
                     view.setReadOnCell(at: IndexPath(row: index, section: 0))
                 }
-            })
+            }
         }
     }
     

@@ -4,7 +4,14 @@
 
 import UIKit
 
+enum LoadingViewState: Equatable {
+    case active (text: String)
+    case inactive
+}
+
 final class LoadingView: UIView, NibLoadable {
+    private var state: LoadingViewState = .inactive
+    
     @IBOutlet private weak var activityIndicator: UIActivityIndicatorView!
     @IBOutlet private weak var textLabel: UILabel!
     @IBOutlet private weak var contentView: UIView!
@@ -12,38 +19,28 @@ final class LoadingView: UIView, NibLoadable {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupFromNib()
+        sharedInit()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupFromNib()
+        sharedInit()
     }
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
+    private func sharedInit() {
         contentView.layer.cornerRadius = 12
-        alpha = 0
     }
     
-    func showLoading(with text: String) {
-        UIView.animate(withDuration: 0.5) {
-            self.activityIndicator.startAnimating()
-            self.contentView.layer.cornerRadius = 12
-            self.textLabel.text = text
-            self.alpha = 1
+    func set(state: LoadingViewState) {
+        if self.state == state { return }
+        
+        if state == .inactive {
+            if activityIndicator.isAnimating { activityIndicator.stopAnimating() }
+        } else if case .active(let text) = state {
+            if !activityIndicator.isAnimating { activityIndicator.startAnimating() }
+            textLabel.text = text
         }
-    }
-    
-    func updateLoading(with text: String) {
-        UIView.animate(withDuration: 0.5) {
-            self.textLabel.text = text
-        }
-    }
-    
-    func hideLoading() {
-        UIView.animate(withDuration: 0.5) {
-            self.activityIndicator.stopAnimating()
-            self.alpha = 1
-        }
+        self.state = state
     }
 }

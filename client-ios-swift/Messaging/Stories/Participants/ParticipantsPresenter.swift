@@ -31,7 +31,13 @@ enum ParticipantsModuleType {
     }
 }
 
-final class ParticipantsPresenter: Presenter, ParticipantsViewOutput, ParticipantsInteractorOutput, ParticipantsRouterOutput, UserListOutput {
+final class ParticipantsPresenter:
+    Presenter,
+    ParticipantsViewOutput,
+    ParticipantsInteractorOutput,
+    ParticipantsRouterOutput,
+    UserListOutput
+{
     weak var view: ParticipantsViewInput?
     
     var interactor: ParticipantsInteractorInput!

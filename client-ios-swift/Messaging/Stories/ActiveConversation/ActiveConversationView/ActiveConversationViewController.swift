@@ -23,19 +23,27 @@ protocol ActiveConversationViewInput: AnyObject, UIIndicator {
     func fillMessageTextView(with text: String)
     func clearMessageTextView()
     func hideEditMessageView()
-    func showMessageOptions(at indexPath: IndexPath)
+    func selectCell(at indexPath: IndexPath)
+    func deselectAllCells()
+    func scrollToBottom()
+
 }
 
 protocol ActiveConversationViewOutput: AnyObject, ControllerLifeCycle {
-    func sendButtonPressed(with text: String)
+    func sendTouchUp(with text: String)
     func rightBarButtonPressed()
     func cancelEditPressed()
     func messageTextViewDidBeginEditing()
     func didAppearAfterEditing(with conversationModel: Conversation)
-    func longTappedOnCell(at indexPath: IndexPath)
+    func didLongTapCell(at indexPath: IndexPath)
 }
 
-final class ActiveConversationViewController: ViewController, ActiveConversationViewInput, UITableViewDelegate, UITextViewDelegate {
+final class ActiveConversationViewController:
+    ViewController,
+    ActiveConversationViewInput,
+    UITableViewDelegate,
+    UITextViewDelegate
+{
     var output: ActiveConversationViewOutput!
     
     @IBOutlet private weak var messagesTableView: ActiveConversationTableView!
@@ -108,7 +116,7 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
         guard let text = messageTextView.text else { return }
         
         if text.isEmpty || text == "" { return }
-        output.sendButtonPressed(with: text)
+        output.sendTouchUp(with: text)
         messageTextView.text = ""
     }
     
@@ -117,7 +125,7 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
         let touchPoint = longPressRecognizer.location(in: messagesTableView)
         
         if let indexPath = messagesTableView.indexPathForRow(at: touchPoint) {
-            output.longTappedOnCell(at: indexPath)
+            output.didLongTapCell(at: indexPath)
         }
     }
     
@@ -177,17 +185,28 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
     }
     
     func setReadOnCell(at indexPath: IndexPath) {
-        if let cell = messagesTableView.cellForRow(at: indexPath)
-        { cell.isRead = true }
+        guard let cell = messagesTableView.cellForRow(at: indexPath)
+            else {
+                return
+        }
+        
+        if let cell = cell as? MessageTableCell {
+            cell.isRead = true
+        }
     }
     
-    func showMessageOptions(at indexPath: IndexPath) {
-        messagesTableView.visibleCells.forEach { ($0 as! MessageTableViewCell).isInEditMode = false }
-        messagesTableView.cellForRow(at: indexPath)?.isInEditMode = true
+    func selectCell(at indexPath: IndexPath) {
+        messagesTableView.cellForRow(at: indexPath)?.setSelected(true, animated: true)
+    }
+    
+    func deselectAllCells() {
+        messagesTableView.visibleCells.forEach {
+            $0.setSelected(false, animated: false)
+        }
     }
     
     func showEditedCell(at indexPath: IndexPath, with text: String) {
-        if let cell = messagesTableView.cellForRow(at: indexPath) {
+        if let cell = messagesTableView.cellForRow(at: indexPath) as? MessageTableCell {
             cell.isEdited = true
             cell.messageText = text
         }
@@ -198,13 +217,20 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
     }
     
     func updateTableView() {
-        messagesTableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+        if messagesTableView.numberOfSections > 0 {
+            messagesTableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+        } else {
+            messagesTableView.reloadData()
+        }
     }
     
     func insertCell(at indexPath: IndexPath) {
         messagesTableView.insertRows(at: [indexPath], with: .top)
     }
     
+    func scrollToBottom() {
+        messagesTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .bottom, animated: true)
+    }
     func showActivityIndicator(_ show: Bool) {
         rightBarButtonItem.conversationButton.isHidden = show
         rightBarButtonItem.profileImageView.isHidden = show
@@ -225,8 +251,6 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
     }
     
     // MARK: - UITableViewDelegate -
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {  } // TODO: Implement edit messages
-    
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let view = UIView()
         view.backgroundColor = .clear
@@ -243,7 +267,10 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat { return 4 }
     
-    func textViewDidBeginEditing(_ textView: UITextView) { output.messageTextViewDidBeginEditing() }
+    // MARK: - UITextViewDelegate -
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        output.messageTextViewDidBeginEditing()
+    }
     
     // MARK: - Private Methods -
     private func addBlur() {
@@ -259,12 +286,7 @@ final class ActiveConversationViewController: ViewController, ActiveConversation
         typingContainerView.sendSubviewToBack(blurEffectView)
     }
     
-    private func setupNavigationBarItem() { navigationItem.setRightBarButton(rightBarButtonItem, animated: false) }
-}
-
-extension ActiveConversationTableView {
-    override func cellForRow(at indexPath: IndexPath) -> MessageTableViewCell? {
-        if let cell = super.cellForRow(at: indexPath) as? MessageTableViewCell { return cell }
-        else { return nil }
+    private func setupNavigationBarItem() {
+        navigationItem.setRightBarButton(rightBarButtonItem, animated: false)
     }
 }

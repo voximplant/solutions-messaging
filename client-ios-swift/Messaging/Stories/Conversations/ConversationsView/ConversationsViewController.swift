@@ -54,7 +54,11 @@ final class ConversationsViewController: ViewController, ConversationsViewInput,
     }
     
     func refresh() {
-        tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+        if tableView.numberOfSections > 0 {
+            tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
+        } else {
+            tableView.reloadData()
+        }
     }
     
     func updateRow(at indexPath: IndexPath) {

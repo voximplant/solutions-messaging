@@ -13,7 +13,7 @@ enum UserListType {
 protocol UserListInput: AnyObject {
     var userListOutput: UserListOutput? { get set }
     var type: UserListType! { get set }
-    var userListModelArray: [UserListCellModel] { get }
+    var userListModels: [UserListCellModel] { get }
     func updateList(with cellModelArray: [UserListCellModel])
 }
 
@@ -30,6 +30,8 @@ extension UserListOutput {
     func didUpdateList(with modelArray: [UserListCellModel]) { }
 }
 
+fileprivate typealias UserCellConfigurator = TableCellConfigurator<UserListCell, UserListCellModel>
+
 final class UserListPresenter: UserListViewOutput {
     weak var view: UserListViewInput?
     
@@ -40,10 +42,15 @@ final class UserListPresenter: UserListViewOutput {
         }
     }
     
-    private let dataSource: TableViewDataSource<UserListCellModel> = UserListTableViewDataSource.make(for: [])
-    var userListModelArray: [UserListCellModel] {
-        get { return dataSource.models }
-        set { dataSource.models = newValue }
+    private let dataSource: UserListTableViewDataSource = UserListTableViewDataSource(items: [])
+    private var userListConfigurators: [[UserCellConfigurator]] {
+        get { dataSource.items as! [[UserCellConfigurator]] }
+        set { dataSource.items = newValue }
+    }
+    
+    private(set) var userListModels: [UserListCellModel] {
+        get { userListConfigurators.first?.map { $0.model } ?? [] }
+        set { userListConfigurators = [newValue.map { UserCellConfigurator(model: $0) }] }
     }
     
     required init(view: UserListViewInput) { self.view = view }
@@ -51,7 +58,7 @@ final class UserListPresenter: UserListViewOutput {
     // MARK: - UserListInput
     func updateList(with cellModelArray: [UserListCellModel]) {
         guard let view = view else { return }
-        userListModelArray = cellModelArray
+        userListConfigurators = [cellModelArray.map { UserCellConfigurator(model: $0) }]
         view.reloadTableView()
         view.hideActivityIndicator()
         userListOutput?.didUpdateList(with: cellModelArray)
@@ -65,13 +72,13 @@ final class UserListPresenter: UserListViewOutput {
     
     func didSelectRow(at indexPath: IndexPath) {
         guard let view = view else { return }
-        if userListModelArray.isEmpty { return }
+        if userListConfigurators.isEmpty { return }
         switch type {
         case .singlePick:
             userListOutput?.didSelectUser(with: indexPath.row)
         case .multiplePick:
-            userListModelArray[indexPath.row].isChoosen.toggle()
-            view.setSelected(userListModelArray[indexPath.row].isChoosen, cellAt: indexPath)
+            userListModels[indexPath.row].isChoosen.toggle()
+            view.setSelected(userListModels[indexPath.row].isChoosen, cellAt: indexPath)
             userListOutput?.didSelectUser(with: indexPath.row)
         case .editable:
             break
@@ -83,5 +90,4 @@ final class UserListPresenter: UserListViewOutput {
     func didEditRow(at indexPath: IndexPath) {
         userListOutput?.didRemoveUser(with: indexPath.row)
     }
-    
 }

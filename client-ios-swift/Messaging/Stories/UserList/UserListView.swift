@@ -5,7 +5,7 @@
 import UIKit
 
 protocol UserListViewInput: AnyObject {
-    func setupTableView(with dataSource: TableViewDataSource<UserListCellModel>)
+    func setupTableView(with dataSource: UserListTableViewDataSource)
     func setSelected(_ selected: Bool, cellAt indexPath: IndexPath)
     func reloadTableView()
     func showActivityIndicator()
@@ -48,21 +48,23 @@ final class UserListView: UIView, NibLoadable, UserListViewInput, UserListTableV
         { cell.isChoosen = selected }
     }
     
-    func setupTableView(with dataSource: TableViewDataSource<UserListCellModel>) {
+    func setupTableView(with dataSource: UserListTableViewDataSource) {
         tableView.delegate = self
         tableView.dataSource = dataSource
     }
     
-    func reloadTableView()
-    { DispatchQueue.main.async { self.tableView.reloadData() } }
+    func reloadTableView() {
+        DispatchQueue.main.async { self.tableView.reloadData() }
+    }
     
     func showActivityIndicator() {
         activityIndicatorView.isHidden = false
         activityIndicatorView.startAnimating()
     }
     
-    func hideActivityIndicator()
-    { activityIndicatorView.stopAnimating() }
+    func hideActivityIndicator() {
+        activityIndicatorView.stopAnimating()
+    }
     
     func allowTableViewEditing() { tableView.allowsEditing = true }
     
@@ -72,20 +74,21 @@ final class UserListView: UIView, NibLoadable, UserListViewInput, UserListTableV
         presenter?.didSelectRow(at: indexPath)
     }
     
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int)
-        -> UIView? { return UIView() }
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        UIView()
+    }
     
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int)
-        -> CGFloat { return 1 }
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        1   
+    }
     
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
-        return .delete
+        .delete
     }
     
     func didDeleteRow(at indexPath: IndexPath) {
          presenter.didEditRow(at: indexPath)
     }
-    
 }
 
 extension UserListTableView {

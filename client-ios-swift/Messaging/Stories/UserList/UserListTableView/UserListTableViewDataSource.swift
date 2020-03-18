@@ -8,8 +8,7 @@ fileprivate let userListCellID = "UserListCell"
 fileprivate let userListNibName = "UserListCell"
 
 final class UserListTableView: TableView {
-    override var cellID: String { return userListCellID }
-    override var nibName: String { return userListNibName }
+    override var cellTypes: [UITableViewCell.Type] { [UserListCell.self] }
     
     override weak var delegate: UITableViewDelegate? {
         didSet {
@@ -22,7 +21,7 @@ final class UserListTableView: TableView {
     var allowsEditing: Bool = false
 }
 
-final class UserListTableViewDataSource<Model>: TableViewDataSource<Model> {
+final class UserListTableViewDataSource: TableDataSource {
     @objc(tableView:canEditRowAtIndexPath:)
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return (tableView as! UserListTableView).allowsEditing
@@ -32,7 +31,7 @@ final class UserListTableViewDataSource<Model>: TableViewDataSource<Model> {
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             if let tableView = tableView as? UserListTableView {
-                models.remove(at: indexPath.row)
+                items[indexPath.section].remove(at: indexPath.row)
                 tableView.deleteRows(at: [indexPath], with: .automatic)
                 tableView.delegateInterceptor?.didDeleteRow(at: indexPath)
             }
@@ -40,11 +39,3 @@ final class UserListTableViewDataSource<Model>: TableViewDataSource<Model> {
     }
 }
 
-extension UserListTableViewDataSource where Model == UserListCellModel {
-    static func make(for modelArray: [UserListCellModel], reuseIdentifier: String = userListCellID) -> UserListTableViewDataSource {
-        return UserListTableViewDataSource(models: modelArray, reuseIdentifier: reuseIdentifier) { (model, cell) in
-            guard let cell = cell as? UserListCell else { return }
-            cell.model = model
-        }
-    }
-}

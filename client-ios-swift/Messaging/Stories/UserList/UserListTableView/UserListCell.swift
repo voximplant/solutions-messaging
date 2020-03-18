@@ -10,7 +10,9 @@ struct UserListCellModel {
     var isChoosen: Bool
 }
 
-final class UserListCell: UITableViewCell {
+final class UserListCell: UITableViewCell, ConfigurableCell {
+    typealias Model = UserListCellModel
+    
     @IBOutlet private weak var userPictureImageView: ProfilePictureView!
     @IBOutlet private weak var username: UILabel!
     
@@ -20,13 +22,12 @@ final class UserListCell: UITableViewCell {
         }
     }
     
-    var model: UserListCellModel! {
-        didSet {
-            userPictureImageView.isForUser = true
-            userPictureImageView.profileName = model.displayName
-            userPictureImageView.name = model.pictureName
-            username.text = model.displayName
-            isChoosen = model.isChoosen
-        }
+    func configure(with model: UserListCellModel) {
+        userPictureImageView.isForUser = true
+        userPictureImageView.profileName = model.displayName
+        userPictureImageView.name = model.pictureName
+        username.text = model.displayName
+        isChoosen = model.isChoosen
     }
 }
+

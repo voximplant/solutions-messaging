@@ -106,7 +106,6 @@ final class MessagingRepository: Repository, VoximplantServiceDelegate {
     // MARK: - Conversations -
     // MARK: - Request
     func requestMyConversations(completion: @escaping ConversationArrayCompletion) { // TODO: refactor
-        
         remoteDataSource.requestMe { result in
             if case .failure (let error) = result { completion(.failure(error)) }
             if case .success (let viUser) = result {

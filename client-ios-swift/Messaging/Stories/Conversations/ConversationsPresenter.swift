@@ -4,22 +4,24 @@
 
 import Foundation
 
+fileprivate typealias ConversationsCellConfigurator = TableCellConfigurator<ConversationTableCell, ConversationTableCellModel>
+
 final class ConversationsPresenter: Presenter, ConversationsViewOutput, ConversationsInteractorOutput {
     private weak var view: ConversationsViewInput?
     
     var interactor: ConversationsInteractorInput!
     var router: ConversationsRouterInput!
     
-    private let dataSource: TableViewDataSource<ConversationCellModel> = .make(for: [])
-    private var cellModels: [ConversationCellModel] {
-        get { return dataSource.models }
-        set { dataSource.models = newValue }
+    private let dataSource: TableDataSource = TableDataSource(items: [])
+    private var cellConfigurators: [[CellConfigurator]] {
+        get { dataSource.items }
+        set { dataSource.items = newValue }
     }
     
     private var conversations: [Conversation] = [] {
         didSet {
             conversations.sort { $0.lastUpdated > $1.lastUpdated }
-            cellModels = conversations.map { buildCellModel(from: $0) }
+            cellConfigurators = [conversations.map { ConversationsCellConfigurator(model: buildCellModel(from: $0)) }]
         }
     }
     
@@ -35,7 +37,7 @@ final class ConversationsPresenter: Presenter, ConversationsViewOutput, Conversa
         view.configureTableView(with: dataSource)
     }
     
-    override func viewWillAppear() {        
+    override func viewWillAppear() {
         interactor.setupDelegates()
     }
     
@@ -135,7 +137,7 @@ final class ConversationsPresenter: Presenter, ConversationsViewOutput, Conversa
         if let index = conversations.firstIndex(where: { $0.uuid == event.message.conversation }) {
             conversations[index].lastUpdated = event.timestamp
             conversations.sort { $0.lastUpdated > $1.lastUpdated }
-            cellModels = conversations.map { buildCellModel(from: $0) }
+            cellConfigurators = [conversations.map { ConversationsCellConfigurator(model: buildCellModel(from: $0)) }]
             view.refresh()
         }
     }
@@ -165,9 +167,9 @@ final class ConversationsPresenter: Presenter, ConversationsViewOutput, Conversa
     }
     
     // MARK: - Private Methods -
-    private func buildCellModel(from conversation: Conversation) -> ConversationCellModel {
-        return ConversationCellModel(type: conversation.type, title: buildTitle(for: conversation),
-                                     pictureName: buildPictureName(for: conversation))
+    private func buildCellModel(from conversation: Conversation) -> ConversationTableCellModel {
+        ConversationTableCellModel(type: conversation.type, title: buildTitle(for: conversation),
+                                   pictureName: buildPictureName(for: conversation))
     }
     
     private func buildTitle(for conversation: Conversation) -> String {

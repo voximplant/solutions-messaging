@@ -8,6 +8,7 @@ protocol PermissionsViewInput: AnyObject, UIIndicator {
     func setupTableView(with dataSource: UITableViewDataSource)
     func showSaveButton(_ show: Bool)
     func reloadUI()
+    func getIndexPath(for cell: PermissionsTableViewCell) -> IndexPath?
 }
 
 protocol PermissionsViewOutput: AnyObject, ControllerLifeCycle {
@@ -52,13 +53,16 @@ final class PermissionsViewController: ViewController, PermissionsViewInput, UIT
     
     func reloadUI() { tableView.reloadData() }
     
+    func getIndexPath(for cell: PermissionsTableViewCell) -> IndexPath? {
+        tableView.indexPath(for: cell)
+    }
+    
     // MARK: - UITableViewDelegates
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 1
+        1
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return UIView()
+        UIView()
     }
-    
 }

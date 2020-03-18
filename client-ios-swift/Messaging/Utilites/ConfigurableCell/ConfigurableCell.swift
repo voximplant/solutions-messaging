@@ -4,6 +4,7 @@
 
 import Foundation
 
-protocol MessengerCellModel {
-    var sequence: Int { get }
+protocol ConfigurableCell {
+    associatedtype Model
+    func configure(with model: Model)
 }

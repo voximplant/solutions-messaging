@@ -5,7 +5,7 @@
 import UIKit
 
 protocol PermissionSwitchDelegate: AnyObject {
-    func didChangeSwitchValue(in model: PermissionsCellModel)
+    func didChangeSwitchValue(in cell: PermissionsTableViewCell)
 }
 
 struct PermissionsCellModel {
@@ -14,18 +14,18 @@ struct PermissionsCellModel {
     var delegate: PermissionSwitchDelegate
 }
 
-final class PermissionsTableViewCell: UITableViewCell {
+final class PermissionsTableViewCell: UITableViewCell, ConfigurableCell {
+    typealias Model = PermissionsCellModel
+    
     weak var delegate: PermissionSwitchDelegate?
     
     @IBOutlet weak var nameLabel: UILabel!
     @IBOutlet weak var isAllowedSwitch: UISwitch!
     
-    var model: PermissionsCellModel! {
-        didSet {
-            nameLabel.text = model.name
-            isAllowedSwitch.isOn = model.isAllowed
-            delegate = model.delegate
-        }
+    func configure(with model: PermissionsCellModel) {
+        nameLabel.text = model.name
+        isAllowedSwitch.isOn = model.isAllowed
+        delegate = model.delegate
     }
 
     override func awakeFromNib() {
@@ -37,7 +37,6 @@ final class PermissionsTableViewCell: UITableViewCell {
     }
     
     @IBAction func switchValueChanged(_ sender: UISwitch) {
-        model.isAllowed = sender.isOn
-        delegate?.didChangeSwitchValue(in: model)
+        delegate?.didChangeSwitchValue(in: self)
     }
 }

@@ -4,25 +4,37 @@
 
 import Foundation
 
-final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsInteractorOutput, PermissionsRouterOutput, PermissionSwitchDelegate {
+fileprivate typealias PermissionsCellConfigurator = TableCellConfigurator<PermissionsTableViewCell, PermissionsCellModel>
+
+final class PermissionsPresenter:
+    Presenter,
+    PermissionsViewOutput,
+    PermissionsInteractorOutput,
+    PermissionsRouterOutput,
+    PermissionSwitchDelegate
+{
     weak var view: PermissionsViewInput?
-    
     var interactor: PermissionsInteractorInput!
     var router: PermissionsRouterInput!
     
     private var conversation: Conversation
-    private var editedPermissions: Permissions!
+    private var editedPermissions: Permissions
     
-    private let dataSource: TableViewDataSource<PermissionsCellModel> = .make(with: [])
-    private var cellModelArray: [PermissionsCellModel] {
-        get { return dataSource.models }
-        set { dataSource.models = newValue }
+    private let dataSource: TableDataSource = TableDataSource(items: [])
+    private var cellConfigurators: [[PermissionsCellConfigurator]] {
+        get { dataSource.items as! [[PermissionsCellConfigurator]] }
+        set { dataSource.items = newValue }
+    }
+    
+    private var cellModels: [PermissionsCellModel] {
+        get { cellConfigurators.first?.map { $0.model } ?? [] }
+        set { cellConfigurators = [newValue.map { PermissionsCellConfigurator(model: $0) }] }
     }
     
     required init(view: PermissionsViewInput, conversation: Conversation) {
         self.view = view
         self.conversation = conversation
-        editedPermissions = conversation.permissions
+        editedPermissions = conversation.permissions!
     }
     
     func isConversationUUIDEqual(to UUID: String) -> Bool {
@@ -31,10 +43,9 @@ final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsI
     
     // MARK: - PermissionsViewOutput
     override func viewDidLoad() {
-        cellModelArray = conversation.permissions!.map { (key, value) in
+        cellModels = conversation.permissions!.map { (key, value) in
             PermissionsCellModel(name: key, isAllowed: value, delegate: self)
         }
-        cellModelArray.sort { $0.isAllowed && !$1.isAllowed }
         view?.setupTableView(with: dataSource)
     }
     
@@ -64,7 +75,8 @@ final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsI
             router.showConversationsScreen(with: conversation)
         } else {
             self.conversation = conversation
-            cellModelArray = conversation.permissions!.map { (key, value) in
+            editedPermissions = conversation.permissions!
+            cellModels = conversation.permissions!.map { (key, value) in
                 PermissionsCellModel(name: key, isAllowed: value, delegate: self)
             }
             view.reloadUI()
@@ -98,6 +110,7 @@ final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsI
     func didEditPermissions(_ newPermissions: Permissions) {
         view?.hideHUD()
         conversation.permissions = newPermissions
+        editedPermissions = newPermissions
         for index in 0 ..< conversation.participants.count {
             if !conversation.participants[index].isOwner {
                 conversation.participants[index].permissions = newPermissions
@@ -106,7 +119,8 @@ final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsI
     }
     
     func failedToEditPermissions(with error: Error) {
-        cellModelArray = conversation.permissions!.map { (key, value) in
+        editedPermissions = conversation.permissions!
+        cellModels = conversation.permissions!.map{ (key, value) in
             PermissionsCellModel(name: key, isAllowed: value, delegate: self)
         }
         view?.reloadUI()
@@ -119,13 +133,17 @@ final class PermissionsPresenter: Presenter, PermissionsViewOutput, PermissionsI
     override func tryingToLogin() { view?.showHUD(with: "Connecting...") }
     
     override func loginCompleted() { view?.hideHUD() }
-    
+        
     // MARK: - PermissionsRouterOutput
-    func requestConversationModel() -> Conversation { return conversation }
+    func requestConversationModel() -> Conversation { conversation }
     
     // MARK: - PermissionSwitchDelegate
-    func didChangeSwitchValue(in model: PermissionsCellModel) {
+    func didChangeSwitchValue(in cell: PermissionsTableViewCell) {
+        guard let indexPath = view?.getIndexPath(for: cell)
+            else { return }
+        cellModels[indexPath.row].isAllowed.toggle()
+        let model = cellModels[indexPath.row]
         editedPermissions[model.name] = model.isAllowed
-        if editedPermissions != conversation.permissions { view?.showSaveButton(true) }
+        view?.showSaveButton(editedPermissions != conversation.permissions)
     }
 }

@@ -48,8 +48,8 @@ final class AddParticipantsPresenter: Presenter, AddParticipantsViewOutput, AddP
     
     // MARK: - UserListOutput
     func didSelectUser(with index: Int) {
-        print(userListInput.userListModelArray)
-        view?.enableAddButton(userListInput.userListModelArray.contains(where: { $0.isChoosen }))
+        print(userListInput.userListModels)
+        view?.enableAddButton(userListInput.userListModels.contains(where: { $0.isChoosen }))
     }
     
     // MARK: - AddParticipantsInteractorOutput
@@ -240,7 +240,7 @@ final class AddParticipantsPresenter: Presenter, AddParticipantsViewOutput, AddP
     }
     
     private func buildSelectedModelArray() -> [User]? {
-        guard let selectedUsers = userListInput?.userListModelArray,
+        guard let selectedUsers = userListInput?.userListModels,
             let userModels = userListUsers
             else { return nil }
         

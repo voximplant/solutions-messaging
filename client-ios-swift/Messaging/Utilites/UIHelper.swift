@@ -30,7 +30,7 @@ final class UIHelper {
     // MARK: - Loading HUD Methods
     private static let loadingWindow = LoadingWindow()
     
-    static func showLoading(with title: String) { loadingWindow.showLoading(with: title) }
+    static func showLoading(with title: String) { loadingWindow.set(state: .active(text: title)) }
     
-    static func hideLoading() { loadingWindow.hideLoading() }
+    static func hideLoading() { loadingWindow.set(state: .inactive) }
 }
