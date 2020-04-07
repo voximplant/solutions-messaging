@@ -427,7 +427,7 @@ final class ActiveConversationPresenter:
         
         view.showActivityIndicator(true)
         if !conversation.participants
-            .contains { $0.user.imID == interactor.me?.imID } {
+            .contains(where: { $0.user.imID == interactor.me?.imID }) {
             view.showError(with: "You have been removed from the conversation")
             router.showConversationsScreen(with: conversation)
         } else {
