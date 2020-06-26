@@ -2,8 +2,6 @@
 *  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
 */
 
-import UIKit
-
 protocol LoginRouterInput: AnyObject {
     func showConversationsStory()
 }
@@ -19,10 +17,10 @@ final class LoginRouter: LoginRouterInput {
     }
     
     // MARK: - Entry Point
-    static var moduleEntryController: UIViewController {
-        let viewController = UIStoryboard.main.instantiateViewController(withIdentifier: LoginViewController.self) as! LoginViewController
+    static var moduleEntryController: LoginViewController {
+        let viewController = Storyboard.login.instantiateViewController(of: LoginViewController.self)
         
-        let configurator: LoginConfiguratorProtocol = LoginConfigurator()
+        let configurator = StoryConfiguratorFactory.loginConfigurator
         configurator.configure(with: viewController)
         
         return viewController

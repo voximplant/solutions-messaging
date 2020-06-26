@@ -2,24 +2,22 @@
 *  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
 */
 
-import UIKit
-
 protocol CreateDirectRouterInput: AnyObject {
-    func showCreateChatStory(of type: ConversationType, with users: [User])
+    func showCreateChatStory(of type: Conversation.ConversationType)
     func showConversationScreen(with conversation: Conversation)
 }
 
 final class CreateDirectRouter: CreateDirectRouterInput {
+    private weak var viewController: CreateDirectViewController?
     
-    weak var viewController: CreateDirectViewController!
-    
-    init(viewController: CreateDirectViewController) {
-        self.viewController = viewController
-    }
+    init(viewController: CreateDirectViewController) { self.viewController = viewController }
     
     // MARK: - CreateDirectRouterInput
-    func showCreateChatStory(of type: ConversationType, with users: [User]) {
-        viewController.navigationController?.show(CreateChatRouter.moduleEntryController(with: type, and: users), sender: self)
+    func showCreateChatStory(of type: Conversation.ConversationType) {
+        viewController?.navigationController?.show(
+            CreateChatRouter.moduleEntryController(with: type),
+            sender: self
+        )
     }
     
     func showConversationScreen(with conversation: Conversation) {
@@ -27,13 +25,15 @@ final class CreateDirectRouter: CreateDirectRouterInput {
         var controllers = controller.viewControllers
         controllers.append(ActiveConversationRouter.moduleEntryController(with: conversation))
         controller.viewControllers = controllers
-        viewController.navigationController?.present(controller, animated: true, completion: nil)
+        viewController?.navigationController?.present(controller, animated: true)
     }
     
     // MARK: - Entry Point
-    static var moduleEntryController: UIViewController {
-        let configurator = CreateDirectConfigurator()
-        let viewController = UIStoryboard.main.instantiateViewController(withIdentifier: CreateDirectViewController.self) as! CreateDirectViewController
+    static var moduleEntryController: CreateDirectViewController {
+        let configurator = StoryConfiguratorFactory.createDirectConfigurator
+        let viewController = Storyboard.create.instantiateViewController(
+            of: CreateDirectViewController.self
+        )
         configurator.configure(with: viewController)
         return viewController
     }

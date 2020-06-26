@@ -4,146 +4,90 @@
 
 import Foundation
 
-fileprivate typealias PermissionsCellConfigurator = TableCellConfigurator<PermissionsTableViewCell, PermissionsCellModel>
-
 final class PermissionsPresenter:
-    Presenter,
+    ControllerLifeCycleObserver,
     PermissionsViewOutput,
     PermissionsInteractorOutput,
-    PermissionsRouterOutput,
-    PermissionSwitchDelegate
+    MainQueuePerformable
 {
-    weak var view: PermissionsViewInput?
-    var interactor: PermissionsInteractorInput!
-    var router: PermissionsRouterInput!
+    private weak var view: PermissionsViewInput?
+    var interactor: PermissionsInteractorInput! // DI
+    var router: PermissionsRouterInput! // DI
     
-    private var conversation: Conversation
-    private var editedPermissions: Permissions
+    private var permissions: Permissions { interactor.permissions }
     
-    private let dataSource: TableDataSource = TableDataSource(items: [])
-    private var cellConfigurators: [[PermissionsCellConfigurator]] {
-        get { dataSource.items as! [[PermissionsCellConfigurator]] }
-        set { dataSource.items = newValue }
-    }
-    
-    private var cellModels: [PermissionsCellModel] {
-        get { cellConfigurators.first?.map { $0.model } ?? [] }
-        set { cellConfigurators = [newValue.map { PermissionsCellConfigurator(model: $0) }] }
-    }
-    
-    required init(view: PermissionsViewInput, conversation: Conversation) {
-        self.view = view
-        self.conversation = conversation
-        editedPermissions = conversation.permissions!
-    }
-    
-    func isConversationUUIDEqual(to UUID: String) -> Bool {
-        return conversation.uuid == UUID
-    }
-    
+    init(view: PermissionsViewInput) { self.view = view }
+
     // MARK: - PermissionsViewOutput
-    override func viewDidLoad() {
-        cellModels = conversation.permissions!.map { (key, value) in
-            PermissionsCellModel(name: key, isAllowed: value, delegate: self)
-        }
-        view?.setupTableView(with: dataSource)
+    func viewDidLoad() {
+        updateView(with: permissions)
     }
     
-    override func viewWillAppear() {
-        interactor.setupDelegates()
+    func viewWillAppear() {
+        interactor.setupObservers()
     }
     
-    override func viewDidAppear() {
-        router.viewDidAppear()
+    func viewWillDisappear() {
+        interactor.removeObservers()
+    }
+    
+    func permissionsChanged() {
+        view?.showSaveButton(isPermissionsChanged)
     }
     
     func barButtonPressed() {
-        if editedPermissions == conversation.permissions { return }
+        guard let newPermissions = editedPermissions, isPermissionsChanged else { return }
         view?.showHUD(with: "Saving...")
         view?.showSaveButton(false)
-        interactor.editPermissions(editedPermissions, in: conversation)
+        interactor.editPermissions(newPermissions)
     }
     
     // MARK: - PermissionsInteractorOutput
-    // MARK: - Conversation
-    func didEdit(conversation: Conversation) {
-        guard let view = view  else { return }
-        
-        if !conversation.participants
-            .contains(where: { $0.user.imID == interactor.me.imID }) {
-            view.showError(with: "You have been removed from the conversation")
-            router.showConversationsScreen(with: conversation)
-        } else {
-            self.conversation = conversation
-            editedPermissions = conversation.permissions!
-            cellModels = conversation.permissions!.map { (key, value) in
-                PermissionsCellModel(name: key, isAllowed: value, delegate: self)
-            }
-            view.reloadUI()
+    func permissionsChanged(_ permissions: Permissions) {
+        onMainQueue {
+            self.view?.hideHUD()
+            self.updateView(with: permissions)
         }
     }
     
-    func didRemove(conversation: Conversation) {
-        guard let view = view else { return }
-        
-        view.showError(with: "Conversation was removed")
-        router.showConversationsScreen(with: conversation)
-    }
-    
-    func readEventReceived(with sequence: Int) {
-        conversation.latestReadSequence = sequence
-    }
-    
-    func messageEventReceived() {
-        conversation.lastSequence += 1
-    }
-    
-    // MARK: - User
-    func didEdit(user: User) {
-        guard view != nil else { return }
-        
-        if var participant = conversation.participants.first(where: { $0.user.imID == user.imID }) {
-            participant.user = user
-        }
-    }
-    
-    func didEditPermissions(_ newPermissions: Permissions) {
-        view?.hideHUD()
-        conversation.permissions = newPermissions
-        editedPermissions = newPermissions
-        for index in 0 ..< conversation.participants.count {
-            if !conversation.participants[index].isOwner {
-                conversation.participants[index].permissions = newPermissions
-            }
+    func conversationDisappeared() {
+        onMainQueue {
+            self.view?.hideHUD()
+            self.router.showConversationsScreen()
         }
     }
     
     func failedToEditPermissions(with error: Error) {
-        editedPermissions = conversation.permissions!
-        cellModels = conversation.permissions!.map{ (key, value) in
-            PermissionsCellModel(name: key, isAllowed: value, delegate: self)
+        onMainQueue {
+            self.updateView(with: self.permissions)
+            self.view?.hideHUD()
+            self.view?.showError(error)
         }
-        view?.reloadUI()
-        view?.hideHUD()
-        view?.showError(with: error.localizedDescription)
     }
     
-    override func connectionLost() { view?.showError(with: "Cant connect") }
+    // MARK: - Private
+    private var editedPermissions: Permissions? {
+        guard let view = view else { return nil }
+        return Permissions(
+            canWrite: view.canWrite,
+            canEditMessages: view.canEdit,
+            canEditAllMessages: view.canEditAll,
+            canRemoveMessages: view.canRemove,
+            canRemoveAllMessages: view.canRemoveAll,
+            canManageParticipants: view.canManage
+        )
+    }
     
-    override func tryingToLogin() { view?.showHUD(with: "Connecting...") }
+    private var isPermissionsChanged: Bool {
+        editedPermissions != permissions
+    }
     
-    override func loginCompleted() { view?.hideHUD() }
-        
-    // MARK: - PermissionsRouterOutput
-    func requestConversationModel() -> Conversation { conversation }
-    
-    // MARK: - PermissionSwitchDelegate
-    func didChangeSwitchValue(in cell: PermissionsTableViewCell) {
-        guard let indexPath = view?.getIndexPath(for: cell)
-            else { return }
-        cellModels[indexPath.row].isAllowed.toggle()
-        let model = cellModels[indexPath.row]
-        editedPermissions[model.name] = model.isAllowed
-        view?.showSaveButton(editedPermissions != conversation.permissions)
+    private func updateView(with permissions: Permissions) {
+        view?.canWrite = permissions.canWrite
+        view?.canEdit = permissions.canEditMessages
+        view?.canEditAll = permissions.canEditAllMessages
+        view?.canRemove = permissions.canRemoveMessages
+        view?.canRemoveAll = permissions.canRemoveAllMessages
+        view?.canManage = permissions.canManageParticipants
     }
 }

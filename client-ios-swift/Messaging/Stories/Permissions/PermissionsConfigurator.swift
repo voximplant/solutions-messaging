@@ -9,14 +9,25 @@ protocol PermissionsConfiguratorProtocol {
 }
 
 final class PermissionsConfigurator: PermissionsConfiguratorProtocol {
+    private let repositopy: Repository
+    private let conversationDataSource: ConversationDataSource
+    
+    init(repository: Repository, conversationDataSource: ConversationDataSource) {
+        self.repositopy = repository
+        self.conversationDataSource = conversationDataSource
+    }
+    
     func configure(with viewController: PermissionsViewController, and conversation: Conversation) {
-        let presenter = PermissionsPresenter(view: viewController, conversation: conversation)
-        let interactor = PermissionsInteractor(output: presenter)
+        let presenter = PermissionsPresenter(view: viewController)
+        let interactor = PermissionsInteractor(
+            output: presenter,
+            repository: repositopy,
+            conversationDataSource: conversationDataSource,
+            conversation: conversation
+        )
         let router = PermissionsRouter(viewController: viewController)
-        
         viewController.output = presenter
         presenter.interactor = interactor
         presenter.router = router
-        router.output = presenter
     }
 }

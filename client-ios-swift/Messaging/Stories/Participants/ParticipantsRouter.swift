@@ -2,62 +2,45 @@
 *  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
 */
 
-import UIKit
-
 protocol ParticipantsRouterInput: AnyObject {
     func showAddParticipantsScreen(with conversation: Conversation)
     func showAddAdminsScreen(with conversation: Conversation)
-    func showConversationsScreen(with conversation: Conversation)
-    func viewDidAppear()
+    func showConversationsScreen()
 }
 
-protocol ParticipantsRouterOutput: AnyObject {
-    func requestConversationModel() -> Conversation
-}
-
-final class ParticipantsRouter: NSObject, ParticipantsRouterInput, UINavigationControllerDelegate {
-    weak var viewController: ParticipantsViewController?
-    weak var output: ParticipantsRouterOutput?
+final class ParticipantsRouter: ParticipantsRouterInput {
+    private weak var viewController: ParticipantsViewController?
     
-    init(viewController: ParticipantsViewController) { self.viewController = viewController }
+    init(viewController: ParticipantsViewController) {
+        self.viewController = viewController
+    }
     
     // MARK: - ParticipantsRouterInput -
-    func viewDidAppear() { viewController?.navigationController?.delegate = self }
-    
     func showAddParticipantsScreen(with conversation: Conversation) {
-        let controller = AddParticipantsRouter.moduleEntryController(with: .members(model: conversation))
+        let controller = AddParticipantsRouter.moduleEntryController(with: .members, conversation: conversation)
         viewController?.navigationController?.pushViewController(controller, animated: true)
     }
     
     func showAddAdminsScreen(with conversation: Conversation) {
-        let controller = AddParticipantsRouter.moduleEntryController(with: .admins(model: conversation))
+        let controller = AddParticipantsRouter.moduleEntryController(with: .admins, conversation: conversation)
         viewController?.navigationController?.pushViewController(controller, animated: true)
     }
     
-    func showConversationsScreen(with conversation: Conversation) {
+    func showConversationsScreen() {
         guard let conversationsViewController = viewController?.navigationController?.viewControllers
-            .first(where:
-                { $0 is ConversationsViewController }) as? ConversationsViewController
-            else { return }
-        conversationsViewController.output.didAppearAfterRemoving(conversation: conversation)
+            .first(where: { $0 is ConversationsViewController }) else {
+                return
+        }
         viewController?.navigationController?.popToViewController(conversationsViewController, animated: true)
     }
     
     // MARK: Entry Point -
-    static func moduleEntryController(with type: ParticipantsModuleType) -> ParticipantsViewController {
-        let viewController = UIStoryboard.main.instantiateViewController(withIdentifier: ParticipantsViewController.self) as! ParticipantsViewController
+    static func moduleEntryController(with type: ParticipantsModuleType, conversation: Conversation) -> ParticipantsViewController {
+        let viewController = Storyboard.convesation.instantiateViewController(of: ParticipantsViewController.self)
         
-        let configurator: ParticipantsConfiguratorProtocol = ParticipantsConfigurator()
-        configurator.configure(with: viewController, and: type)
+        let configurator = StoryConfiguratorFactory.participantsConfigurator
+        configurator.configure(with: viewController, and: type, conversation: conversation)
         
         return viewController
-    }
-    
-    // MARK: - UINavigationControllerDelegate -
-    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        guard let output = output else { return }
-        if let viewController = viewController as? ConversationInfoViewController {
-            viewController.output.didAppearAfterRemoving(with: output.requestConversationModel())
-        }
     }
 }

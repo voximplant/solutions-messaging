@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="16119" systemVersion="19F101" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ConversationEventObject" representedClassName="ConversationEventObject" parentEntity="MessengerEventObject" syncable="YES">
+        <attribute name="action" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="ConversationObject" representedClassName="ConversationObject" syncable="YES">
+        <attribute name="canEditAllMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canEditMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canManageParticipants" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canRemoveAllMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canRemoveMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canWrite" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="conversationDescription" optional="YES" attributeType="String"/>
+        <attribute name="isPublic" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isUber" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="lastReadSequence" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="lastSequence" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="lastUpdatedTime" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="pictureName" optional="YES" attributeType="String"/>
+        <attribute name="title" optional="YES" attributeType="String"/>
+        <attribute name="type" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="uuid" attributeType="String"/>
+        <relationship name="events" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MessengerEventObject" inverseName="conversation" inverseEntity="MessengerEventObject"/>
+        <relationship name="participants" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ParticipantObject" inverseName="conversation" inverseEntity="ParticipantObject"/>
+    </entity>
+    <entity name="MessageEventObject" representedClassName="MessageEventObject" parentEntity="MessengerEventObject" syncable="YES">
+        <attribute name="edited" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isRead" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="messageSequence" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="removed" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="text" attributeType="String"/>
+        <attribute name="uuid" attributeType="String"/>
+    </entity>
+    <entity name="MessengerEventObject" representedClassName="MessengerEventObject" isAbstract="YES" syncable="YES">
+        <attribute name="sequence" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="timestamp" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <relationship name="conversation" maxCount="1" deletionRule="Nullify" destinationEntity="ConversationObject" inverseName="events" inverseEntity="ConversationObject"/>
+        <relationship name="initiator" maxCount="1" deletionRule="Nullify" destinationEntity="UserObject" inverseName="events" inverseEntity="UserObject"/>
+    </entity>
+    <entity name="ParticipantObject" representedClassName="ParticipantObject" syncable="YES">
+        <attribute name="canEditAllMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canEditMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canManageParticipants" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canRemoveAllMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canRemoveMessages" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="canWrite" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="isOwner" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="lastReadEventSequence" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <relationship name="conversation" maxCount="1" deletionRule="Nullify" destinationEntity="ConversationObject" inverseName="participants" inverseEntity="ConversationObject"/>
+        <relationship name="user" maxCount="1" deletionRule="Nullify" destinationEntity="UserObject" inverseName="participants" inverseEntity="UserObject"/>
+    </entity>
+    <entity name="UserObject" representedClassName="UserObject" syncable="YES">
+        <attribute name="displayName" attributeType="String"/>
+        <attribute name="imId" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="me" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="pictureName" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="username" attributeType="String"/>
+        <relationship name="events" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="MessengerEventObject" inverseName="initiator" inverseEntity="MessengerEventObject"/>
+        <relationship name="participants" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="ParticipantObject" inverseName="user" inverseEntity="ParticipantObject"/>
+    </entity>
+    <elements>
+        <element name="ConversationEventObject" positionX="0" positionY="0" width="128" height="58"/>
+        <element name="ConversationObject" positionX="0" positionY="0" width="128" height="313"/>
+        <element name="MessageEventObject" positionX="0" positionY="0" width="128" height="133"/>
+        <element name="MessengerEventObject" positionX="0" positionY="0" width="128" height="103"/>
+        <element name="ParticipantObject" positionX="0" positionY="0" width="128" height="193"/>
+        <element name="UserObject" positionX="0" positionY="0" width="128" height="163"/>
+    </elements>
+</model>

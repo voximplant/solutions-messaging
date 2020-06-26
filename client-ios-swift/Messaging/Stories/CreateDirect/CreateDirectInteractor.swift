@@ -5,75 +5,63 @@
 import Foundation
 
 protocol CreateDirectInteractorInput: AnyObject {
-    var me: User { get }
-    func setupDelegates()
-    func requestUsers()
-    func createDirect(with user: User)
+    var numberOfUsers: Int { get }
+    func getUser(at indexPath: IndexPath) -> User
+    func createDirect(with userID: User.ID)
+    func setupObservers(_ observer: DataSourceObserver<User>)
 }
 
-protocol CreateDirectInteractorOutput: AnyObject, ConnectionEvents {
-    func conversationCreated(conversation model: Conversation)
+protocol CreateDirectInteractorOutput: AnyObject {
+    func conversationCreated(_ conversation: Conversation)
     func failedToCreateConversation(with error: Error)
-    func usersLoaded(_ users: [User])
-    func usersLoadingFailed(with error: String)
-    func didEdit(user: User)
 }
 
-final class CreateDirectInteractor: CreateDirectInteractorInput, RepositoryDelegate, AuthServiceDelegate {    
+final class CreateDirectInteractor: CreateDirectInteractorInput {
     weak var output: CreateDirectInteractorOutput?
     
-    private let authService: AuthServiceProtocol = sharedAuthService
-    private let repository: Repository = sharedRepository
+    private let repository: Repository
+    private let userDataSource: UserDataSource
+    private var userObserver: DataSourceObserver<User>?
+    private let includeMe = false
     
-    var me: User { return repository.me! }
+    init(output: CreateDirectInteractorOutput,
+         repository: Repository,
+         userDataSource: UserDataSource
+    ) {
+        self.output = output
+        self.repository = repository
+        self.userDataSource = userDataSource
+    }
     
-    required init(output: CreateDirectInteractorOutput) { self.output = output }
+    deinit {
+        if let userObserver = userObserver {
+            userDataSource.removeObserver(userObserver)
+            self.userObserver = nil
+        }
+    }
     
     // MARK: - CreateDirectInteractorInput
-    func setupDelegates() {
-        repository.set(delegate: self)
-        authService.set(delegate: self)
+    var numberOfUsers: Int {
+        userDataSource.getNumberOfUsers(includingMe: includeMe)
     }
     
-    func requestUsers() {
-        repository.requestAllUsers { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.usersLoadingFailed(with: error.localizedDescription) }
-            if case .success (let userModelArray) = result { self.output?.usersLoaded(userModelArray) }
+    func getUser(at indexPath: IndexPath) -> User {
+        userDataSource.getUser(at: indexPath, includingMe: includeMe)
+    }
+    
+    func createDirect(with userID: User.ID) {
+        repository.createDirectConversation(with: userID) { [weak self] result in
+            if case .success (let conversation) = result {
+                self?.output?.conversationCreated(conversation)
+            }
+            if case .failure (let error) = result {
+                self?.output?.failedToCreateConversation(with: error)
+            }
         }
     }
     
-    func createDirect(with user: User) {
-        repository.createDirectConversation(with: user) { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.failedToCreateConversation(with: error) }
-            if case .success (let conversation) = result { self.output?.conversationCreated(conversation: conversation) }
-        }
+    func setupObservers(_ observer: DataSourceObserver<User>) {
+        userObserver = observer
+        userDataSource.observeUsers(includingMe: includeMe, observer: observer)
     }
-    
-    // MARK: - MessagingRepositoryDelegate
-    func didReceiveUserEvent(_ event: UserEvent) {
-        guard let output = output else { return }
-        switch event.action {
-        case .editUser: output.didEdit(user: event.initiator)
-        }
-    }
-    
-    // MARK: - AuthServiceDelegate
-    func didDisconnect() {
-        output?.connectionLost()
-    }
-    
-    func reconnecting() {
-        output?.tryingToLogin()
-    }
-    
-    func didLogin(with displayName: String) {
-        output?.loginCompleted()
-    }
-    
-    func didFailToLogin(with error: Error) {
-        output?.tryingToLogin()
-    }
-    
 }

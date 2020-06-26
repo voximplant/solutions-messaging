@@ -2,50 +2,48 @@
 *  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
 */
 
-import Foundation
-
-final class LoginPresenter: Presenter, LoginViewOutput, LoginInteractorOutput {
-    weak var view: LoginViewInput!
+final class LoginPresenter:
+    ControllerLifeCycleObserver,
+    LoginViewOutput,
+    LoginInteractorOutput
+{
+    private weak var view: LoginViewInput! // DI
+    var interactor: LoginInteractorInput! // DI
+    var router: LoginRouterInput! // DI
     
-    var interactor: LoginInteractorInput!
-    var router: LoginRouterInput!
-    
-    private var currentVersion: (vox: String, webrtc: String) { return interactor.getSDKVersion() }
-    private var savedUsername: String? { return interactor.getUsername() }
-    
-    required init(view: LoginViewInput) { self.view = view }
+    init(view: LoginViewInput) { self.view = view }
     
     // MARK: - LoginViewOutput
-    override func viewWillAppear() {
-        view.updateVersionLabel(with: buildVersionFieldText(from: currentVersion))
-        view.refreshFields(with: buildUsernameFieldText(from: savedUsername))
-        interactor.setupDelegate()
+    func viewWillAppear() {
+        view.updateVersionLabel(with: buildVersionFieldText(from: interactor.sdkVersion))
+        view.refreshFields(with: buildUsernameFieldText(from: interactor.username))
     }
     
-    func loginButtonPressed() {
+    func login() {
         view.showHUD(with: "Logging in...")
-        if let password = view.passwordInput { interactor.login(with: view.usernameInput, and: password) }
-        else { view.showError(with: "You must enter password to log in") }
+        interactor.login(with: view.usernameInput, and: view.passwordInput)
     }
     
     // MARK: - LoginInteractorOutput
-    override func loginFailed(with error: Error) {
+    func loginFailed(with error: Error) {
         view.hideHUD()
-        view.showError(with: error.localizedDescription)
+        view.showError(error)
     }
     
-    override func loginCompleted() {
+    func loginCompleted() {
         view.hideHUD()
         router.showConversationsStory()
     }
     
-    // MARK: - Private methods
+    // MARK: - Private
     private func buildVersionFieldText(from versions: (vox: String, webrtc: String)) -> String {
-        return "VoximplantSDK \(versions.vox)\nWebRTC \(versions.webrtc)"
+        "VoximplantSDK \(versions.vox)\nWebRTC \(versions.webrtc)"
     }
     
     private func buildUsernameFieldText(from username: String?) -> String {
-        guard let user = username else { return "" }
-        return user.replacingOccurrences(of: "@\(appName).\(accountName)\(voxDomain)", with: "")
+        username?.replacingOccurrences(
+            of: "@\(VoximplantConfig.appName).\(VoximplantConfig.accountName)\(VoximplantConfig.voxDomain)",
+            with: ""
+        ) ?? ""
     }
 }

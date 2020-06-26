@@ -4,24 +4,32 @@
 
 import UIKit
 
-protocol ParticipantsViewInput: AnyObject, UIIndicator {
-    var userListView: UserListView! { get }
+protocol ParticipantsViewInput: AnyObject, HUDShowable {
+    var userListView: UserListView { get }
     func updateAppearance(with text: String)
 }
 
-protocol ParticipantsViewOutput: AnyObject, ControllerLifeCycle {
-    func addMemberButtonPressed()
-    func didAppearAfterAdding(with conversation: Conversation)
+protocol ParticipantsViewOutput: AnyObject, ControllerLifeCycleObserver {
+    func addMember()
 }
 
-final class ParticipantsViewController: ViewController, ParticipantsViewInput {
-    var output: ParticipantsViewOutput!
+final class ParticipantsViewController: UIViewController, ParticipantsViewInput {
+    var output: ParticipantsViewOutput! // DI
+    let userListView: UserListView = UserListView()
     
-    @IBOutlet weak var userListView: UserListView!
-    @IBOutlet weak var addButton: GrayButton!
+    @IBOutlet private weak var addButtonContainer: UIView!
+    @IBOutlet private weak var addButton: GrayButton!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.addSubview(userListView)
+        userListView.translatesAutoresizingMaskIntoConstraints = false
+        userListView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        userListView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        userListView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        userListView.topAnchor.constraint(equalTo: addButtonContainer.bottomAnchor).isActive = true
+        
         output.viewDidLoad()
     }
     
@@ -35,8 +43,13 @@ final class ParticipantsViewController: ViewController, ParticipantsViewInput {
         output.viewDidAppear()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
     @IBAction func addMemberButtonPressed(_ sender: GrayButton) {
-        output.addMemberButtonPressed()
+        output.addMember()
     }
     
     // MARK: - ParticipantsViewInput -

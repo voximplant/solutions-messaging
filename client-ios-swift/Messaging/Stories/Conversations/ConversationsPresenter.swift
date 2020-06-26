@@ -1,202 +1,112 @@
 /*
-*  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
-*/
+ *  Copyright (c) 2011-2019, Zingaya, Inc. All rights reserved.
+ */
 
 import Foundation
 
-fileprivate typealias ConversationsCellConfigurator = TableCellConfigurator<ConversationTableCell, ConversationTableCellModel>
-
-final class ConversationsPresenter: Presenter, ConversationsViewOutput, ConversationsInteractorOutput {
+final class ConversationsPresenter:
+    ControllerLifeCycleObserver,
+    ConversationsViewOutput,
+    ConversationsInteractorOutput,
+    MainQueuePerformable
+{
+    private typealias ConversationsCellConfigurator
+        = TableCellConfigurator<ConversationTableCell, ConversationTableCellModel>
+    
     private weak var view: ConversationsViewInput?
+    var interactor: ConversationsInteractorInput! // DI
+    var router: ConversationsRouterInput! // DI
     
-    var interactor: ConversationsInteractorInput!
-    var router: ConversationsRouterInput!
+    private var appearedMoreThanOnce: Bool = false
+    private var onTheScreen: Bool = false
     
-    private let dataSource: TableDataSource = TableDataSource(items: [])
-    private var cellConfigurators: [[CellConfigurator]] {
-        get { dataSource.items }
-        set { dataSource.items = newValue }
-    }
-    
-    private var conversations: [Conversation] = [] {
-        didSet {
-            conversations.sort { $0.lastUpdated > $1.lastUpdated }
-            cellConfigurators = [conversations.map { ConversationsCellConfigurator(model: buildCellModel(from: $0)) }]
-        }
-    }
-    
-    required init(view: ConversationsViewInput) { self.view = view }
+    init(view: ConversationsViewInput) { self.view = view }
     
     // MARK: - ConversationsViewOutput -
-    override func viewDidLoad() {
-        guard let view = view else { return }
-        
-        view.showHUD(with: "Connecting...")
-        interactor.loginWithAccessToken()
-        
-        view.configureTableView(with: dataSource)
+    var numberOfRows: Int {     
+        let number = interactor.numberOfConversations
+        view?.showEmptiness = number == 0
+        return number
     }
     
-    override func viewWillAppear() {
-        interactor.setupDelegates()
+    func viewWillAppear() {
+        interactor.setupObservers(
+            DataSourceObserver<Conversation>(
+                contentWillChange: { [weak self] in
+                    self?.onMainQueue {
+                        if self?.onTheScreen ?? false {
+                            self?.view?.beginUpdate()
+                        }
+                    }
+                },
+                contentDidChange: { [weak self] in
+                    self?.onMainQueue {
+                        if self?.onTheScreen ?? false {
+                            self?.view?.endUpdate()
+                        }
+                    }
+                },
+                didReceiveChange: { [weak self] change in
+                    self?.onMainQueue {
+                        if self?.onTheScreen ?? false {
+                            switch change {
+                            case .update(_, let indexPath):
+                                self?.view?.updateRow(at: indexPath)
+                            case .insert(_, let indexPath):
+                                self?.view?.insertRow(at: indexPath)
+                            case .delete(let indexPath):
+                                self?.view?.removeRow(at: indexPath)
+                            case .move(let indexPath, let newIndexPath):
+                                self?.view?.moveRow(from: indexPath, to: newIndexPath)
+                            }
+                        }
+                    }
+                }
+            )
+        )
     }
     
-    override func viewDidAppear() {
-        guard let view = view else { return }
-        guard interactor.me != nil else { return }
-        
-        view.showHUD(with: "Updating...")
-        interactor.fetchConversations()
-    }
-    
-    func didAppearAfterRemoving(conversation: Conversation) {
-        guard let view = view else { return }
-        
-        if let index = conversations.firstIndex(where: { $0.uuid == conversation.uuid }) {
-            conversations.remove(at: index)
-            view.removeRow(at: IndexPath(row: index, section: 0))
+    func viewDidAppear() {
+        if appearedMoreThanOnce {
+            view?.refresh()
         }
+        onTheScreen = true
     }
     
-    func rightBarButtonPressed() {
+    func viewWillDisappear() {
+        appearedMoreThanOnce = true
+        onTheScreen = false
+    }
+        
+    func getConfiguratorForCell(at indexPath: IndexPath) -> CellConfigurator {
+        ConversationsCellConfigurator(model: interactor.getConversation(at: indexPath).cellModel)
+    }
+        
+    func createConversationPressed() {
         router.showNewConversationScreen()
     }
     
-    func leftBarButtonPressed() {
+    func profilePressed() {
         router.showSettingsScreen()
     }
     
-    func didSelectRow(with indexPath: IndexPath) {
-        if !conversations.indices.contains(indexPath.row) { return }
-        router.showActiveConversationScreen(with: conversations[indexPath.row])
+    func didSelectRow(at indexPath: IndexPath) {
+        router.showActiveConversationScreen(with: interactor.getConversation(at: indexPath))
     }
     
     // MARK: - ConversationsInteractorOutput -
-    // MARK: - Conversation
-    func didCreate(conversation: Conversation) {
-        guard let view = view else { return }
-        
-        conversations.append(conversation)
-        view.insertRow(at: IndexPath(row: 0, section: 0))
-    }
-    
-    func beenRemoved(from conversation: Conversation) {
-        guard let view = view else { return }
-        
-        if let index = conversations.firstIndex(where: { $0.uuid == conversation.uuid }) {
-            conversations.remove(at: index)
-            view.removeRow(at: IndexPath(row: index, section: 0))
-        }
-    }
-    
-    func didUpdate(conversation: Conversation) {
-        guard let view = view else { return }
-        
-        if let index = conversations.firstIndex(where: { $0.uuid == conversation.uuid }) {
-            conversations[index] = conversation
-            view.updateRow(at: IndexPath(row: index, section: 0))
-        } else {
-            conversations.append(conversation)
-            view.insertRow(at: IndexPath(row: 0, section: 0))
-        }
-    }
-    
-    func didReceive(conversations: [Conversation]) {
-        guard let view = view else { return }
-        
-        conversations.forEach { conversation in
-            if let index = self.conversations.firstIndex(where: { $0.uuid == conversation.uuid }) {
-                self.conversations[index] = conversation
-            } else {
-                self.conversations.append(conversation)
-            }
-        }
-        
-        view.refresh()
-        view.hideHUD()
-    }
-    
-    func didRemove(conversation: Conversation) {
-        guard let view = view else { return }
-        
-        if let index = conversations.firstIndex(where: { $0.uuid == conversation.uuid }) {
-            conversations.remove(at: index)
-            view.removeRow(at: IndexPath(row: index, section: 0))
-        }
-    }
-    
     func fetchingFailed(with error: Error) {
         view?.hideHUD()
-        view?.showError(with: error.localizedDescription)
+        view?.showError(error)
     }
-    
-    // MARK: - Message
-    func didReceive(messageEvent event: MessageEvent) {
-        guard let view = view else { return }
-        
-        if let index = conversations.firstIndex(where: { $0.uuid == event.message.conversation }) {
-            conversations[index].lastUpdated = event.timestamp
-            conversations.sort { $0.lastUpdated > $1.lastUpdated }
-            cellConfigurators = [conversations.map { ConversationsCellConfigurator(model: buildCellModel(from: $0)) }]
-            view.refresh()
-        }
-    }
-    
-    // MARK: - Connection
-    override func loginCompleted() {
-        guard let view = view else { return }
-        
-        view.showHUD(with: "Updating...")
-        interactor.fetchConversations()
-    }
-    
-    override func loginFailed(with error: Error) {
-        guard let view = view else { return }
-        
-        view.hideHUD()
-        view.showError(with: error.localizedDescription)
-        router.showLoginStory()
-    }
-    
-    override func connectionLost() {
-        view?.showHUD(with: "Connection lost")
-    }
-    
-    override func tryingToLogin() {
-        view?.showHUD(with: "Connecting...")
-    }
-    
-    // MARK: - Private Methods -
-    private func buildCellModel(from conversation: Conversation) -> ConversationTableCellModel {
-        ConversationTableCellModel(type: conversation.type, title: buildTitle(for: conversation),
-                                   pictureName: buildPictureName(for: conversation))
-    }
-    
-    private func buildTitle(for conversation: Conversation) -> String {
-        if conversation.type == .direct
-        {
-            var displayName: String = ""
-            conversation.participants.forEach
-                { participant in
-                    if participant.user.imID != interactor.me!.imID
-                    { displayName = participant.user.displayName }
-                }
-            return displayName
-        }
-        else { return conversation.title }
-    }
-    
-    private func buildPictureName(for conversation: Conversation) -> String? {
-        if conversation.type == .direct
-        {
-            var pictureName: String?
-            conversation.participants.forEach
-                { participant in
-                    if participant.user.imID != interactor.me!.imID
-                    { pictureName = participant.user.pictureName }
-                }
-            return pictureName
-        }
-        else { return conversation.pictureName }
+}
+
+fileprivate extension Conversation {
+    var cellModel: ConversationTableCellModel {
+        return ConversationTableCellModel(
+            type: type,
+            title: title,
+            pictureName: pictureName
+        )
     }
 }

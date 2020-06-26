@@ -5,16 +5,30 @@
 import Foundation
 
 protocol CreateChatConfiguratorProtocol: AnyObject {
-    func configure(with viewController: CreateChatViewController, and type: ConversationType, users: [User])
+    func configure(with viewController: CreateChatViewController, and type: Conversation.ConversationType)
 }
 
 final class CreateChatConfigurator: CreateChatConfiguratorProtocol {
-    func configure(with viewController: CreateChatViewController, and type: ConversationType, users: [User]) {
-        let presenter = CreateChatPresenter(view: viewController, users: users)
-        let interactor = CreateChatInteractor(output: presenter)
+    private let repositopy: Repository
+    private let userDataSource: UserDataSource
+    
+    init(repository: Repository, userDataSource: UserDataSource) {
+        self.repositopy = repository
+        self.userDataSource = userDataSource
+    }
+    
+    func configure(with viewController: CreateChatViewController, and type: Conversation.ConversationType) {
+        let presenter = CreateChatPresenter(view: viewController)
+        let userListPresenter = UserListPresenter(view: viewController.userListView, output: presenter)
+        presenter.userListInput = userListPresenter
+        viewController.userListView.output = userListPresenter
+        viewController.output = presenter
+        
+        let interactor = CreateChatInteractor(output: presenter,
+                                              repository: repositopy,
+                                              userDataSource: userDataSource)
         let router = CreateChatRouter(viewController: viewController)
         
-        viewController.output = presenter
         presenter.interactor = interactor
         presenter.router = router
         presenter.type = type

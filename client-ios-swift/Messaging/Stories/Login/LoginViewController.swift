@@ -4,32 +4,44 @@
 
 import UIKit
 
-protocol LoginViewInput: AnyObject, UIIndicator {
+protocol LoginViewInput: AnyObject, HUDShowable {
     var usernameInput: String { get }
-    var passwordInput: String? { get }
+    var passwordInput: String { get }
     func updateVersionLabel(with text: String)
     func refreshFields(with username: String)
 }
 
-protocol LoginViewOutput: AnyObject, ControllerLifeCycle {
-    func loginButtonPressed()
+protocol LoginViewOutput: AnyObject, ControllerLifeCycleObserver {
+    func login()
 }
 
-final class LoginViewController: ViewController, LoginViewInput {
-    var output: LoginViewOutput!
+final class LoginViewController:
+    UIViewController,
+    MovingWithKeyboard,
+    LoginViewInput
+{
+    var output: LoginViewOutput! // DI
     
     @IBOutlet private weak var userField: CustomTextField!
     @IBOutlet private weak var passwordField: CustomTextField!
     @IBOutlet private weak var versionLabel: UILabel!
     
-    var usernameInput: String { return userField.stringWithAccAndAppDomains }
-    var passwordInput: String? { return passwordField.text }
+    var usernameInput: String { userField.text?.withAccount.withVoximplantDomain ?? "" }
+    var passwordInput: String { passwordField.text ?? "" }
+    
+    override var preferredStatusBarStyle: UIStatusBarStyle { .lightContent }
+    
+    // MARK: MovingWithKeyboard
+    var adjusted: Bool = false
+    var defaultPositionY: CGFloat = 0.0
+    var keyboardWillChangeFrameObserver: NSObjectProtocol?
+    var keyboardWillHideObserver: NSObjectProtocol?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        hideKeyboardWhenTappedAround()
-        moveViewWithKeyboard()
+        subscribeOnKeyboardEvents()
         navigationController?.isNavigationBarHidden = true
+        output.viewDidLoad()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -37,29 +49,21 @@ final class LoginViewController: ViewController, LoginViewInput {
         output.viewWillAppear()
     }
     
-    override func keyboardWillShow(notification: NSNotification) {
-        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y == 0 {
-                self.view.frame.origin.y -= keyboardSize.height / 3
-            }
-        }
+    deinit {
+        unsubscribeFromKeyboardEvents()
     }
     
-    override var preferredStatusBarStyle: UIStatusBarStyle { return .lightContent }
-    
-    @IBAction func loginButtonPressed(_ sender: Any) { output.loginButtonPressed() }
+    @IBAction func loginButtonPressed(_ sender: Any) {
+        output.login()
+    }
         
     // MARK: - LoginViewInput
-    func updateVersionLabel(with text: String) { versionLabel.text = text }
+    func updateVersionLabel(with text: String) {
+        versionLabel.text = text
+    }
+    
     func refreshFields(with username: String) {
         userField.text = username
         passwordField.text = ""
     }
-    
-    deinit { removeKeyboardObservers() }
-}
-
-fileprivate extension UITextField {
-    var stringWithAccAndAppDomains: String
-    { return (text ?? "") + "@\(appName).\(accountName)\(voxDomain)" }
 }

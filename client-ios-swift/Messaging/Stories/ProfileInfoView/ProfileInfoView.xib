@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="15400" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16097" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
     <device id="retina6_1" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15404"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -30,20 +30,6 @@
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="tDs-d5-la2">
                     <rect key="frame" x="0.0" y="0.0" width="414" height="108"/>
                     <subviews>
-                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="L9c-wd-D4S">
-                            <rect key="frame" x="0.0" y="107" width="414" height="1"/>
-                            <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
-                            <constraints>
-                                <constraint firstAttribute="height" constant="1" id="sxZ-SY-Lho"/>
-                            </constraints>
-                        </view>
-                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="C68-ae-sQ2">
-                            <rect key="frame" x="0.0" y="0.0" width="414" height="1"/>
-                            <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
-                            <constraints>
-                                <constraint firstAttribute="height" constant="1" id="FmA-W2-pMe"/>
-                            </constraints>
-                        </view>
                         <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="1Hi-5W-MDv">
                             <rect key="frame" x="124" y="72.5" width="290" height="1"/>
                             <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
@@ -60,7 +46,7 @@
                                     <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <state key="normal" image="Camera"/>
                                     <connections>
-                                        <action selector="changePictureButtonPressed:" destination="-1" eventType="touchUpInside" id="9su-of-re4"/>
+                                        <action selector="changePictureButtonPressed:" destination="-1" eventType="touchUpInside" id="DD8-JY-fra"/>
                                     </connections>
                                 </button>
                             </subviews>
@@ -84,21 +70,15 @@
                     <constraints>
                         <constraint firstItem="1Hi-5W-MDv" firstAttribute="top" secondItem="al5-DK-ZGx" secondAttribute="bottom" constant="1" id="0Dw-Pp-Aas"/>
                         <constraint firstItem="al5-DK-ZGx" firstAttribute="centerY" secondItem="Dg1-TA-aZN" secondAttribute="centerY" id="318-Gf-jNY"/>
-                        <constraint firstAttribute="bottom" secondItem="L9c-wd-D4S" secondAttribute="bottom" id="5Jr-xS-4dN"/>
                         <constraint firstItem="1Hi-5W-MDv" firstAttribute="leading" secondItem="al5-DK-ZGx" secondAttribute="leading" id="8gr-Hk-lXe"/>
-                        <constraint firstItem="C68-ae-sQ2" firstAttribute="leading" secondItem="tDs-d5-la2" secondAttribute="leading" id="Ap9-dG-H1L"/>
                         <constraint firstItem="al5-DK-ZGx" firstAttribute="leading" secondItem="Dg1-TA-aZN" secondAttribute="trailing" constant="18" id="HXL-NO-K5g"/>
                         <constraint firstAttribute="height" constant="108" id="Hih-e8-rfr"/>
-                        <constraint firstItem="C68-ae-sQ2" firstAttribute="top" secondItem="tDs-d5-la2" secondAttribute="top" id="I5n-1Z-tP5"/>
                         <constraint firstItem="al5-DK-ZGx" firstAttribute="height" secondItem="Dg1-TA-aZN" secondAttribute="height" multiplier="0.4" id="Icw-Ke-G6v"/>
-                        <constraint firstAttribute="trailing" secondItem="C68-ae-sQ2" secondAttribute="trailing" id="J18-X0-b2n"/>
                         <constraint firstItem="Dg1-TA-aZN" firstAttribute="leading" secondItem="tDs-d5-la2" secondAttribute="leading" constant="18" id="WVX-q8-H3R"/>
                         <constraint firstAttribute="trailing" secondItem="al5-DK-ZGx" secondAttribute="trailing" constant="18" id="Wul-Qr-mif"/>
                         <constraint firstAttribute="trailing" secondItem="1Hi-5W-MDv" secondAttribute="trailing" id="XT8-J4-IkK"/>
                         <constraint firstItem="Dg1-TA-aZN" firstAttribute="top" secondItem="tDs-d5-la2" secondAttribute="top" constant="10" id="gKr-sI-G6k"/>
-                        <constraint firstItem="L9c-wd-D4S" firstAttribute="leading" secondItem="tDs-d5-la2" secondAttribute="leading" id="gpY-PD-xEv"/>
                         <constraint firstAttribute="bottom" secondItem="Dg1-TA-aZN" secondAttribute="bottom" constant="10" id="mXb-Yt-Fs4"/>
-                        <constraint firstAttribute="trailing" secondItem="L9c-wd-D4S" secondAttribute="trailing" id="nfs-Ya-V1e"/>
                     </constraints>
                 </view>
                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="dpB-kx-SBU">

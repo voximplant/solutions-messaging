@@ -11,8 +11,6 @@ struct UserListCellModel {
 }
 
 final class UserListCell: UITableViewCell, ConfigurableCell {
-    typealias Model = UserListCellModel
-    
     @IBOutlet private weak var userPictureImageView: ProfilePictureView!
     @IBOutlet private weak var username: UILabel!
     
@@ -23,7 +21,6 @@ final class UserListCell: UITableViewCell, ConfigurableCell {
     }
     
     func configure(with model: UserListCellModel) {
-        userPictureImageView.isForUser = true
         userPictureImageView.profileName = model.displayName
         userPictureImageView.name = model.pictureName
         username.text = model.displayName

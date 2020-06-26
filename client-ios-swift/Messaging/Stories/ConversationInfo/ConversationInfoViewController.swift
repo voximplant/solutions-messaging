@@ -4,51 +4,81 @@
 
 import UIKit
 
-protocol ConversationInfoViewInput: AnyObject, UIIndicator {
-    var userListView: UserListView! { get }
+protocol ConversationInfoViewInput: AnyObject, HUDShowable {
+    var userListView: UserListView { get }
     var profileHeader: ProfileInfoView! { get }
-    func showPermissions(_ allow: Bool)
-    func toggleEditView()
-    func showEditButton(_ show: Bool)
-    func showUserList(_ show: Bool)
+    var state: ConversationInfoViewControllerState { get set }
     func showLeaveButton(_ show: Bool)
-    func changeNumberOfMembers(with number: Int)
 }
 
-protocol ConversationInfoViewOutput: AnyObject, ControllerLifeCycle {
+protocol ConversationInfoViewOutput: AnyObject, ControllerLifeCycleObserver {
     func rightBarButtonPressed(with sender: BarButtonItem)
     func leaveButtonPressed()
     func addMembersButtonPressed()
     func administratorsButtonPressed()
     func permissionsButtonPressed()
     func membersButtonPressed()
-    func didAppearAfterAdding(with conversation: Conversation)
-    func didAppearAfterRemoving(with conversation: Conversation)
-    func didAppearAfterChangingPermissions(_ conversation: Conversation)
 }
 
-final class ConversationInfoViewController: ViewController, ConversationInfoViewInput {
-    var output: ConversationInfoViewOutput!
+enum ConversationInfoViewControllerState {
+    case editing (showPermissions: Bool)
+    case normal (editingAllowed: Bool, numberOfMembers: Int, showMembers: Bool)
+}
+
+final class ConversationInfoViewController: UIViewController, ConversationInfoViewInput {
+    var output: ConversationInfoViewOutput! // DI
+    let userListView: UserListView = UserListView()
     
-    @IBOutlet weak var rightBarButton: BarButtonItem!
-    @IBOutlet weak var memberLabel: UILabel!
-    @IBOutlet weak var userListView: UserListView!
-    @IBOutlet weak var profileHeader: ProfileInfoView!
-    @IBOutlet weak var settingsStackView: UIStackView!
-    @IBOutlet weak var addMembersView: UIView!
-    @IBOutlet weak var permissionsView: UIView!
-    @IBOutlet weak var leaveButton: UIButton!
+    @IBOutlet private weak var rightBarButton: BarButtonItem!
+    @IBOutlet private weak var memberLabel: UILabel!
+    @IBOutlet private(set) weak var profileHeader: ProfileInfoView!
+    @IBOutlet private weak var settingsStackView: UIStackView!
+    @IBOutlet private weak var addMembersView: UIView!
+    @IBOutlet private var permissionsView: UIView!
+    @IBOutlet private weak var leaveButton: UIButton!
     
-    @IBAction func rightBarButtonPressed(_ sender: BarButtonItem) {
-        output.rightBarButtonPressed(with: sender)
+    var state: ConversationInfoViewControllerState = .normal(editingAllowed: false,
+                                                             numberOfMembers: 0,
+                                                             showMembers: false) {
+        didSet {
+            switch state {
+            case .editing (let showPermissions):
+                settingsStackView.isHidden = false
+                addMembersView.isHidden = true
+                userListView.isHidden = true
+                memberLabel.isHidden = true
+                permissionsView.isHidden = !showPermissions
+                rightBarButton.buttonAction = .save
+                profileHeader.setState(.editing)
+                break
+            case .normal(let editingAllowed, let numberOfMembers, let showMembers):
+                settingsStackView.isHidden = true
+                addMembersView.isHidden = !showMembers
+                userListView.isHidden = !showMembers
+                memberLabel.isHidden = !showMembers
+                memberLabel.text = numberOfMembers == 1
+                    ? "\(numberOfMembers) member"
+                    : "\(numberOfMembers) members"
+                rightBarButton.buttonAction = editingAllowed ? .edit : .none
+                profileHeader.setState(.normal)
+                break
+            }
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        output.viewDidLoad()
+        view.addSubview(userListView)
+        userListView.translatesAutoresizingMaskIntoConstraints = false
+        userListView.bottomAnchor.constraint(equalTo: leaveButton.topAnchor).isActive = true
+        userListView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        userListView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        userListView.topAnchor.constraint(equalTo: addMembersView.bottomAnchor).isActive = true
+        
         profileHeader.uberContainer.removeFromSuperview()
-        hideKeyboardWhenTappedAround()
+        
+        output.viewDidLoad()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -59,6 +89,15 @@ final class ConversationInfoViewController: ViewController, ConversationInfoView
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         output.viewDidAppear()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
+    @IBAction func rightBarButtonPressed(_ sender: BarButtonItem) {
+        output.rightBarButtonPressed(with: sender)
     }
     
     @IBAction func addMembersButtonPressed(_ sender: GrayButton) {
@@ -82,40 +121,7 @@ final class ConversationInfoViewController: ViewController, ConversationInfoView
     }
     
     // MARK: - ConversationInfoViewInput -
-    func showUserList(_ show: Bool) {
-        addMembersView.isHidden = !show
-        userListView.isHidden = !show
-        memberLabel.isHidden = !show
-    }
-    
-    func showPermissions(_ show: Bool) {
-        show
-            ? settingsStackView.addArrangedSubview(permissionsView)
-            : permissionsView.removeFromSuperview()
-    }
-    
-    func toggleEditView() {
-        settingsStackView.isHidden.toggle()
-        addMembersView.isHidden.toggle()
-        userListView.isHidden.toggle()
-        memberLabel.isHidden.toggle()
-        rightBarButton.buttonAction = profileHeader.isEditable ? .edit : .save
-        profileHeader.isEditable.toggle()
-    }
-    
-    func setEditButtonTitle(_ text: String) {
-        rightBarButton.title = text
-    }
-    
-    func showEditButton(_ show: Bool) {
-        rightBarButton.buttonAction = show ? .edit : .none
-    }
-    
     func showLeaveButton(_ show: Bool) {
         leaveButton.isHidden = !show
-    }
-    
-    func changeNumberOfMembers(with number: Int) {
-        memberLabel.text = number == 1 ? "\(number) member" : "\(number) members"
     }
 }

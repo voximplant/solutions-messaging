@@ -5,95 +5,48 @@
 import Foundation
 
 protocol ConversationsInteractorInput: AnyObject {
-    func loginWithAccessToken()
-    func fetchConversations()
-    func setupDelegates()
-    var me: User? { get }
+    var numberOfConversations: Int { get }
+    func setupObservers(_ observer: DataSourceObserver<Conversation>)
+    func removeObservers()
+    func getConversation(at indexPath: IndexPath) -> Conversation
 }
 
-protocol ConversationsInteractorOutput: AnyObject, ConnectionEvents {
-    func didCreate(conversation: Conversation)
-    func didUpdate(conversation: Conversation)
-    func didRemove(conversation: Conversation)
-    func beenRemoved(from conversation: Conversation)
-    func didReceive(conversations: [Conversation])
-    func didReceive(messageEvent: MessageEvent)
+protocol ConversationsInteractorOutput: AnyObject {
     func fetchingFailed(with error: Error)
 }
 
-final class ConversationsInteractor: ConversationsInteractorInput, RepositoryDelegate, AuthServiceDelegate {
-    weak var output: ConversationsInteractorOutput?
+final class ConversationsInteractor: ConversationsInteractorInput {
+    private weak var output: ConversationsInteractorOutput?
+    private let conversationDataSource: ConversationDataSource
+    private var observer: DataSourceObserver<Conversation>?
     
-    private let authService: AuthServiceProtocol = sharedAuthService
-    private let repository: Repository = sharedRepository
+    var numberOfConversations: Int { conversationDataSource.numberOfConversations }
     
-    var me: User? { return repository.me }
+    init(output: ConversationsInteractorOutput,
+         conversationDataSource: ConversationDataSource
+    ) {
+        self.output = output
+        self.conversationDataSource = conversationDataSource
+    }
     
-    required init(output: ConversationsInteractorOutput) { self.output = output }
+    deinit {
+        removeObservers()
+    }
     
     // MARK: - ConversationsInteractorInput -
-    func setupDelegates() {
-        repository.set(delegate: self)
-        authService.set(delegate: self)
+    func getConversation(at indexPath: IndexPath) -> Conversation {
+        conversationDataSource.getConversation(at: indexPath)
     }
     
-    func loginWithAccessToken() {
-        output?.tryingToLogin()
-        authService.loginWithAccessToken { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.loginFailed(with: error) }
-            else if case .success (_) = result { self.output?.loginCompleted() }
+    func setupObservers(_ observer: DataSourceObserver<Conversation>) {
+        self.observer = observer
+        conversationDataSource.observeConversations(observer)
+    }
+    
+    func removeObservers() {
+        if let observer = observer {
+            conversationDataSource.removeObserver(observer)
+            self.observer = nil
         }
-    }
-    
-    func fetchConversations() {
-        repository.requestMyConversations { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.fetchingFailed(with: error) }
-            else if case .success (let conversationModelArray) = result {
-                self.output?.didReceive(conversations: conversationModelArray)
-            }
-        }
-    }
-    
-    // MARK: - MessagingRepositoryDelegate -
-    func didReceiveMessageEvent(_ event: MessageEvent) {
-        guard let output = output else { return }
-        switch event.action {
-        case .send   : output.didReceive(messageEvent: event)
-        case .edit   : break
-        case .remove : break
-        }
-    }
-    
-    func didReceiveConversationEvent(_ event: ConversationEvent) {
-        guard let output = output else { return }
-        switch event.action {
-        case .createConversation : output.didCreate(conversation: event.conversation)
-        case .editConversation   : output.didUpdate(conversation: event.conversation)
-        case .removeConversation : output.didRemove(conversation: event.conversation)
-        case .addParticipants    : output.didUpdate(conversation: event.conversation)
-        case .editParticipants   : output.didUpdate(conversation: event.conversation)
-        case .removeParticipants : output.beenRemoved(from: event.conversation)
-        case .joinConversation   : output.didUpdate(conversation: event.conversation)
-        case .leaveConversation  : output.didUpdate(conversation: event.conversation)
-        }
-    }
-    
-    // MARK: - AuthServiceDelegate -
-    func didDisconnect() {
-        output?.connectionLost()
-    }
-    
-    func reconnecting() {
-        output?.tryingToLogin()
-    }
-    
-    func didLogin(with displayName: String) {
-        output?.loginCompleted()
-    }
-    
-    func didFailToLogin(with error: Error) {
-        output?.loginFailed(with: error)
     }
 }

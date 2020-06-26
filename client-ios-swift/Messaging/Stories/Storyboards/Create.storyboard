@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="16097" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--New Conversation-->
+        <scene sceneID="vYp-Ss-UlN">
+            <objects>
+                <viewController storyboardIdentifier="CreateDirectViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="y5C-1m-jNr" customClass="CreateDirectViewController" customModule="Messaging" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" clipsSubviews="YES" contentMode="scaleToFill" id="VxD-oQ-72g">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="-1" translatesAutoresizingMaskIntoConstraints="NO" id="ZDX-L6-IfE">
+                                <rect key="frame" x="0.0" y="88" width="414" height="109"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="pGZ-xL-2fA">
+                                        <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="n4k-oh-RxQ" customClass="GrayButton" customModule="Messaging" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                                <inset key="titleEdgeInsets" minX="75" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                                <state key="normal" title="New Group">
+                                                    <color key="titleColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="newGroupButtonPressed:" destination="y5C-1m-jNr" eventType="touchUpInside" id="EgS-9Y-3he"/>
+                                                </connections>
+                                            </button>
+                                            <view userInteractionEnabled="NO" tag="1" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="5ZB-0x-nZb" customClass="SeparatedView" customModule="Messaging" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="image" keyPath="icon" value="people"/>
+                                                </userDefinedRuntimeAttributes>
+                                            </view>
+                                        </subviews>
+                                        <color key="backgroundColor" systemColor="secondarySystemGroupedBackgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="bottom" secondItem="5ZB-0x-nZb" secondAttribute="bottom" id="3gb-ew-wxn"/>
+                                            <constraint firstAttribute="height" constant="55" id="EbE-5c-dxs"/>
+                                            <constraint firstItem="n4k-oh-RxQ" firstAttribute="top" secondItem="pGZ-xL-2fA" secondAttribute="top" id="LPx-nd-J2c"/>
+                                            <constraint firstAttribute="trailing" secondItem="n4k-oh-RxQ" secondAttribute="trailing" id="gMa-3m-C7r"/>
+                                            <constraint firstItem="5ZB-0x-nZb" firstAttribute="leading" secondItem="pGZ-xL-2fA" secondAttribute="leading" id="mk1-2G-bYH"/>
+                                            <constraint firstItem="n4k-oh-RxQ" firstAttribute="leading" secondItem="pGZ-xL-2fA" secondAttribute="leading" id="o2D-T0-1sg"/>
+                                            <constraint firstAttribute="bottom" secondItem="n4k-oh-RxQ" secondAttribute="bottom" id="qMU-Xa-gmB"/>
+                                            <constraint firstItem="5ZB-0x-nZb" firstAttribute="top" secondItem="pGZ-xL-2fA" secondAttribute="top" id="wKu-vn-bxP"/>
+                                            <constraint firstAttribute="trailing" secondItem="5ZB-0x-nZb" secondAttribute="trailing" id="zOC-U7-jfG"/>
+                                        </constraints>
+                                    </view>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="3aY-NM-xhX">
+                                        <rect key="frame" x="0.0" y="54" width="414" height="55"/>
+                                        <subviews>
+                                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="XNJ-tw-HR4" customClass="GrayButton" customModule="Messaging" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                                <inset key="titleEdgeInsets" minX="75" minY="0.0" maxX="0.0" maxY="0.0"/>
+                                                <state key="normal" title="New Channel">
+                                                    <color key="titleColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                </state>
+                                                <connections>
+                                                    <action selector="newChannelButtonPressed:" destination="y5C-1m-jNr" eventType="touchUpInside" id="CD7-Qn-bOv"/>
+                                                </connections>
+                                            </button>
+                                            <view userInteractionEnabled="NO" tag="1" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="MyM-Pu-ngV" customClass="SeparatedView" customModule="Messaging" customModuleProvider="target">
+                                                <rect key="frame" x="0.0" y="0.0" width="414" height="55"/>
+                                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                <userDefinedRuntimeAttributes>
+                                                    <userDefinedRuntimeAttribute type="image" keyPath="icon" value="Bullhorn"/>
+                                                </userDefinedRuntimeAttributes>
+                                            </view>
+                                        </subviews>
+                                        <color key="backgroundColor" systemColor="secondarySystemGroupedBackgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstItem="XNJ-tw-HR4" firstAttribute="top" secondItem="3aY-NM-xhX" secondAttribute="top" id="8uL-9P-SXJ"/>
+                                            <constraint firstAttribute="height" constant="55" id="D3f-gn-iSq"/>
+                                            <constraint firstItem="MyM-Pu-ngV" firstAttribute="leading" secondItem="3aY-NM-xhX" secondAttribute="leading" id="DEd-wy-aeD"/>
+                                            <constraint firstAttribute="bottom" secondItem="MyM-Pu-ngV" secondAttribute="bottom" id="Dgi-B0-WYe"/>
+                                            <constraint firstAttribute="bottom" secondItem="XNJ-tw-HR4" secondAttribute="bottom" id="P3R-ax-Gia"/>
+                                            <constraint firstItem="MyM-Pu-ngV" firstAttribute="top" secondItem="3aY-NM-xhX" secondAttribute="top" id="Wmu-ho-xrR"/>
+                                            <constraint firstAttribute="trailing" secondItem="MyM-Pu-ngV" secondAttribute="trailing" id="ZCa-pe-AeB"/>
+                                            <constraint firstItem="XNJ-tw-HR4" firstAttribute="leading" secondItem="3aY-NM-xhX" secondAttribute="leading" id="cAm-hO-Mcg"/>
+                                            <constraint firstAttribute="trailing" secondItem="XNJ-tw-HR4" secondAttribute="trailing" id="ydk-NR-uLt"/>
+                                        </constraints>
+                                    </view>
+                                </subviews>
+                            </stackView>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="wmd-wK-iOg" firstAttribute="trailing" secondItem="ZDX-L6-IfE" secondAttribute="trailing" id="7KT-1B-FIv"/>
+                            <constraint firstItem="ZDX-L6-IfE" firstAttribute="leading" secondItem="wmd-wK-iOg" secondAttribute="leading" id="FlI-wH-zec"/>
+                            <constraint firstItem="ZDX-L6-IfE" firstAttribute="top" secondItem="wmd-wK-iOg" secondAttribute="top" id="NFP-mm-gah"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="wmd-wK-iOg"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="New Conversation" id="af2-Ul-30h"/>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" prompted="NO"/>
+                    <connections>
+                        <outlet property="buttonsStackView" destination="ZDX-L6-IfE" id="BVI-os-kkB"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="kmT-6l-VaW" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2552" y="-1629"/>
+        </scene>
+        <!--New Conversation-->
+        <scene sceneID="UCy-2b-QKh">
+            <objects>
+                <viewController storyboardIdentifier="CreateChatViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="v6b-3d-HfZ" customClass="CreateChatViewController" customModule="Messaging" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" clipsSubviews="YES" contentMode="scaleToFill" id="4MI-fN-pvc">
+                        <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="Oz7-ft-n9H" customClass="ProfileInfoView" customModule="Messaging" customModuleProvider="target">
+                                <rect key="frame" x="0.0" y="88" width="414" height="205.5"/>
+                                <color key="backgroundColor" systemColor="secondarySystemGroupedBackgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="205.5" placeholder="YES" id="czI-O3-Snq"/>
+                                </constraints>
+                            </view>
+                        </subviews>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <constraints>
+                            <constraint firstItem="Oz7-ft-n9H" firstAttribute="top" secondItem="nUZ-rm-nYe" secondAttribute="top" id="5xG-z0-snP"/>
+                            <constraint firstItem="Oz7-ft-n9H" firstAttribute="leading" secondItem="nUZ-rm-nYe" secondAttribute="leading" id="grC-sE-ZCR"/>
+                            <constraint firstItem="nUZ-rm-nYe" firstAttribute="trailing" secondItem="Oz7-ft-n9H" secondAttribute="trailing" id="yup-8x-gkd"/>
+                        </constraints>
+                        <viewLayoutGuide key="safeArea" id="nUZ-rm-nYe"/>
+                    </view>
+                    <navigationItem key="navigationItem" title="New Conversation" id="9wd-aJ-50h">
+                        <barButtonItem key="backBarButtonItem" title="Chats" id="eRO-Lo-oNm"/>
+                        <barButtonItem key="rightBarButtonItem" title="Create" id="8bM-wI-7I4">
+                            <color key="tintColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                            <connections>
+                                <action selector="createChatButtonPressed:" destination="v6b-3d-HfZ" id="N3y-jV-ThY"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                    <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" barStyle="black" prompted="NO"/>
+                    <connections>
+                        <outlet property="conversationInfoView" destination="Oz7-ft-n9H" id="UYv-ee-I2o"/>
+                        <outlet property="createButton" destination="8bM-wI-7I4" id="yXS-EV-ai2"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="XUQ-uI-yLy" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3206" y="-1629"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="Bullhorn" width="25" height="25"/>
+        <image name="people" width="25" height="25"/>
+    </resources>
+</document>

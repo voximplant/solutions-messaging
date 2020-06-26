@@ -4,16 +4,9 @@
 
 import UIKit
 
-// MARK: - UIStoryboard
 extension UIStoryboard {
-    static var main: UIStoryboard {
-        return UIStoryboard(name: "Main", bundle: nil)
-    }
-}
-
-extension UIStoryboard {
-    func instantiateViewController(withIdentifier typeIdentifier: UIViewController.Type) -> UIViewController {
-        return instantiateViewController(withIdentifier: String(describing: typeIdentifier))
+    func instantiateViewController<Type: UIViewController>(of type: Type.Type) -> Type {
+        instantiateViewController(withIdentifier: String(describing: type)) as! Type
     }
 }
 
@@ -26,34 +19,6 @@ extension UIViewController { // use this method to hide keyboard on tap on speci
     
     @objc func dismissKeyboard() {
         view.endEditing(true)
-    }
-}
-
-extension UIViewController { // use this method to hide keyboard on move keyboard up and down
-    func moveViewWithKeyboard() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow),
-                                               name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide),
-                                               name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
-    func removeKeyboardObservers() {
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
-    @objc func keyboardWillShow(notification: NSNotification) {
-        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y == 0 {
-                self.view.frame.origin.y -= keyboardSize.height
-            }
-        }
-    }
-
-    @objc func keyboardWillHide(notification: NSNotification) {
-        if self.view.frame.origin.y != 0 {
-            self.view.frame.origin.y = 0
-        }
     }
 }
 

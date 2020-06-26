@@ -9,9 +9,11 @@ protocol SettingsRouterInput: AnyObject {
 }
 
 final class SettingsRouter: SettingsRouterInput {
-    weak var viewController: SettingsViewController!
+    private weak var viewController: SettingsViewController?
     
-    init(viewController: SettingsViewController) { self.viewController = viewController }    
+    init(viewController: SettingsViewController) {
+        self.viewController = viewController
+    }
     
     // MARK: - SettingsRouterInput
     func showLoginStory() {
@@ -19,9 +21,9 @@ final class SettingsRouter: SettingsRouterInput {
     }
     
     // MARK: Entry Point
-    static func moduleEntryController() -> UIViewController {
-        let configurator = SettingsConfigurator()
-        let viewController = UIStoryboard.main.instantiateViewController(withIdentifier: SettingsViewController.self) as! SettingsViewController
+    static func moduleEntryController() -> SettingsViewController {
+        let configurator = StoryConfiguratorFactory.settingsConfigurator
+        let viewController = Storyboard.main.instantiateViewController(of: SettingsViewController.self)
         configurator.configure(with: viewController)
         return viewController
     }

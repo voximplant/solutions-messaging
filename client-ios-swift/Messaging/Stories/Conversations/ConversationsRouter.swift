@@ -12,17 +12,23 @@ protocol ConversationsRouterInput: AnyObject {
 }
 
 final class ConversationsRouter: ConversationsRouterInput {
-    weak var viewController: ConversationsViewController?
+    private weak var viewController: ConversationsViewController?
     
     init(viewController: ConversationsViewController) { self.viewController = viewController }
     
     // MARK: - ConversationsRouterInput -
     func showSettingsScreen() {
-        viewController?.navigationController?.show(SettingsRouter.moduleEntryController(), sender: self)
+        viewController?.navigationController?.show(
+            SettingsRouter.moduleEntryController(),
+            sender: self
+        )
     }
     
     func showNewConversationScreen() {
-        viewController?.navigationController?.show(CreateDirectRouter.moduleEntryController, sender: self)
+        viewController?.navigationController?.show(
+            CreateDirectRouter.moduleEntryController,
+            sender: self
+        )
     }
     
     func showLoginStory() {
@@ -30,15 +36,23 @@ final class ConversationsRouter: ConversationsRouterInput {
     }
     
     func showActiveConversationScreen(with conversation: Conversation) {
-        viewController?.navigationController?.show(ActiveConversationRouter.moduleEntryController(with: conversation), sender: self)
+        viewController?.navigationController?.show(
+            ActiveConversationRouter.moduleEntryController(with: conversation),
+            sender: self
+        )
     }
     
     // MARK: - Entry Point -
     static var moduleEntryController: UINavigationController {
-        let navigationController = UIStoryboard.main.instantiateViewController(withIdentifier: ConversationsViewController.self) as! UINavigationController
-        let viewController = navigationController.viewControllers.first as! ConversationsViewController
+        let navigationController = Storyboard.main
+            .instantiateViewController(
+                withIdentifier: String(describing: ConversationsViewController.self)
+            ) as! UINavigationController
         
-        let configurator: ConversationsConfiguratorProtocol = ConversationsConfigurator()
+        let viewController = navigationController.viewControllers.first
+            as! ConversationsViewController
+        
+        let configurator = StoryConfiguratorFactory.conversationsConfigurator
         configurator.configure(with: viewController)
         
         return navigationController

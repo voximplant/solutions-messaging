@@ -4,20 +4,15 @@
 
 import UIKit
 
-protocol ActiveConversationViewInput: AnyObject, UIIndicator {
-    func updateTitle(with text: String)
+protocol ActiveConversationViewInput: AnyObject, HUDShowable, TableViewControlling {
+    var title: String? { get set }
     func updateRightBarButtonImage(with imageName: String?, and title: String)
     func updateTypingLabel(with text: String)
     func showIsTyping(_ show: Bool)
-    func updateTableView()
-    func insertCell(at indexPath: IndexPath)
-    func setReadOnCell(at indexPath: IndexPath)
-    func removeCell(at indexPath: IndexPath)
-    func showEditedCell(at indexPath: IndexPath, with text: String)
+    
     func showActivityIndicator(_ show: Bool)
     func showNewMessageContainer(_ show: Bool)
     func configureTableView(with dataSource: UITableViewDataSource)
-    func configureTextView()
     func showSending(_ show: Bool)
     func showEditMessageView(with text: String)
     func fillMessageTextView(with text: String)
@@ -26,27 +21,26 @@ protocol ActiveConversationViewInput: AnyObject, UIIndicator {
     func selectCell(at indexPath: IndexPath)
     func deselectAllCells()
     func scrollToBottom()
-
 }
 
-protocol ActiveConversationViewOutput: AnyObject, ControllerLifeCycle {
+protocol ActiveConversationViewOutput: AnyObject, ControllerLifeCycleObserver {
     func sendTouchUp(with text: String)
     func rightBarButtonPressed()
     func cancelEditPressed()
     func messageTextViewDidBeginEditing()
-    func didAppearAfterEditing(with conversationModel: Conversation)
     func didLongTapCell(at indexPath: IndexPath)
 }
 
 final class ActiveConversationViewController:
-    ViewController,
+    UIViewController,
     ActiveConversationViewInput,
+    MovingWithKeyboard,
     UITableViewDelegate,
     UITextViewDelegate
 {
-    var output: ActiveConversationViewOutput!
+    var output: ActiveConversationViewOutput! // DI
     
-    @IBOutlet private weak var messagesTableView: ActiveConversationTableView!
+    @IBOutlet private weak var conversationTableView: ActiveConversationTableView!
     @IBOutlet private weak var typingContainerView: UIView!
     @IBOutlet private weak var editMessageContainerView: SeparatedView!
     @IBOutlet private weak var editMessagePreviewLabel: UILabel!
@@ -56,25 +50,40 @@ final class ActiveConversationViewController:
     @IBOutlet private weak var sendButton: ButtonWithIndicator!
     @IBOutlet private weak var messageTextView: UITextView!
     @IBOutlet private weak var rightBarButtonItem: RoundBarButtonItemWithActivity!
-    @IBOutlet private weak var newMessageContainerView: UIView!
-    @IBOutlet private weak var bottomSafeAreaView: UIView!
-    @IBOutlet private weak var messageBarHeightConstraint: NSLayoutConstraint!
-    @IBOutlet private weak var safeAreaBarHeightConstraint: NSLayoutConstraint!
+    @IBOutlet private weak var messageContainerView: UIView!
     @IBOutlet private var longPressRecognizer: UILongPressGestureRecognizer!
+    
+    var tableView: UITableView { conversationTableView }
+    
+    // MARK: MovingWithKeyboard
+    var adjusted: Bool = false
+    var defaultPositionY: CGFloat = 0.0
+    var moveMultiplier: CGFloat { 1 }
+    var keyboardWillChangeFrameObserver: NSObjectProtocol?
+    var keyboardWillHideObserver: NSObjectProtocol?
+    
+    private var tableDataSource: UITableViewDataSource?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        messagesTableView.transform = CGAffineTransform(rotationAngle: (-.pi)) // because tableView for chat is reverted
+        messageTextView.delegate = self
+        
+        // because tableView for chat is reverted
+        conversationTableView.transform = CGAffineTransform(rotationAngle: (-.pi))
         messageTextView.textContainerInset = UIEdgeInsets(top: 8, left: 6, bottom: 8, right: 6)
         
         addBlur()
         setupNavigationBarItem()
-        hideKeyboardWhenTappedAround(on: messagesTableView)
-        moveViewWithKeyboard()
+        hideKeyboardWhenTappedAround(on: conversationTableView)
         
-        rightBarButtonItem.conversationButton.addTarget(self, action: #selector(rightBarButtonPressed), for: .touchUpInside)
+        rightBarButtonItem.conversationButton.addTarget(
+            self,
+            action: #selector(rightBarButtonPressed),
+            for: .touchUpInside
+        )
         
+        subscribeOnKeyboardEvents()
         output.viewDidLoad()
     }
     
@@ -91,19 +100,7 @@ final class ActiveConversationViewController:
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         view.endEditing(true)
-    }
-    
-    override func keyboardWillShow(notification: NSNotification) {
-        if let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
-            if self.view.frame.origin.y == 0 {
-                if #available(iOS 11.0, *) {
-                    self.view.frame.origin.y -= keyboardSize.height - (UIApplication.shared.keyWindow?.safeAreaInsets.bottom ?? 0)
-                }
-                else {
-                    self.view.frame.origin.y -= keyboardSize.height
-                }
-            }
-        }
+        output.viewWillDisappear()
     }
     
     @objc func rightBarButtonPressed() {
@@ -122,9 +119,9 @@ final class ActiveConversationViewController:
     
     @IBAction func didRecognizeLongPress(_ sender: UILongPressGestureRecognizer) {
         if sender.state != .began { return }
-        let touchPoint = longPressRecognizer.location(in: messagesTableView)
+        let touchPoint = longPressRecognizer.location(in: conversationTableView)
         
-        if let indexPath = messagesTableView.indexPathForRow(at: touchPoint) {
+        if let indexPath = conversationTableView.indexPathForRow(at: touchPoint) {
             output.didLongTapCell(at: indexPath)
         }
     }
@@ -133,7 +130,9 @@ final class ActiveConversationViewController:
         output.cancelEditPressed()
     }
     
-    deinit { removeKeyboardObservers() }
+    deinit {
+        unsubscribeFromKeyboardEvents()
+    }
     
     // MARK: - ActiveConversationViewInput -
     func showSending(_ show: Bool) {
@@ -162,91 +161,57 @@ final class ActiveConversationViewController:
             self.editMessageContainerView.alpha = 0
         }
     }
-    
+        
     func configureTableView(with dataSource: UITableViewDataSource) {
-        messagesTableView.delegate = self
-        messagesTableView.dataSource = dataSource
+        conversationTableView.delegate = self
+        tableDataSource = dataSource
+        conversationTableView.dataSource = tableDataSource
     }
-    
-    func configureTextView() { messageTextView.delegate = self }
-    
-    func updateTitle(with text: String) { title = text }
     
     func updateRightBarButtonImage(with imageName: String?, and title: String) {
         rightBarButtonItem.profileImageView.profileName = title
         rightBarButtonItem.profileImageView.name = imageName
     }
     
-    func updateTypingLabel(with text: String) { self.typingLabel.text = text }
-    
-    func showIsTyping(_ show: Bool) {
-        UIView.animate(withDuration: 1, delay: 0, options: [.curveEaseInOut, .allowUserInteraction],
-                       animations: { self.typingContainerView.alpha = show ? 1 : 0 }, completion: nil)
+    func updateTypingLabel(with text: String) {
+        typingLabel.text = text
     }
     
-    func setReadOnCell(at indexPath: IndexPath) {
-        guard let cell = messagesTableView.cellForRow(at: indexPath)
-            else {
-                return
-        }
-        
-        if let cell = cell as? MessageTableCell {
-            cell.isRead = true
-        }
+    func showIsTyping(_ show: Bool) {
+        UIView.animate(
+            withDuration: 1,
+            delay: 0,
+            options: [.curveEaseInOut, .allowUserInteraction],
+            animations: { self.typingContainerView.alpha = show ? 1 : 0 },
+            completion: nil
+        )
     }
     
     func selectCell(at indexPath: IndexPath) {
-        messagesTableView.cellForRow(at: indexPath)?.setSelected(true, animated: true)
+        conversationTableView.cellForRow(at: indexPath)?.setSelected(true, animated: true)
     }
     
     func deselectAllCells() {
-        messagesTableView.visibleCells.forEach {
+        conversationTableView.visibleCells.forEach {
             $0.setSelected(false, animated: false)
         }
     }
     
-    func showEditedCell(at indexPath: IndexPath, with text: String) {
-        if let cell = messagesTableView.cellForRow(at: indexPath) as? MessageTableCell {
-            cell.isEdited = true
-            cell.messageText = text
-        }
-    }
-    
-    func removeCell(at indexPath: IndexPath) {
-        messagesTableView.deleteRows(at: [indexPath], with: .automatic)
-    }
-    
-    func updateTableView() {
-        if messagesTableView.numberOfSections > 0 {
-            messagesTableView.reloadSections(IndexSet(integer: 0), with: .automatic)
-        } else {
-            messagesTableView.reloadData()
-        }
-    }
-    
-    func insertCell(at indexPath: IndexPath) {
-        messagesTableView.insertRows(at: [indexPath], with: .top)
-    }
-    
     func scrollToBottom() {
-        messagesTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .bottom, animated: true)
+        conversationTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .bottom, animated: true)
     }
+    
     func showActivityIndicator(_ show: Bool) {
         rightBarButtonItem.conversationButton.isHidden = show
         rightBarButtonItem.profileImageView.isHidden = show
-        show ? rightBarButtonItem.activityIndicator.startAnimating()
-             : rightBarButtonItem.activityIndicator.stopAnimating()
+        show
+            ? rightBarButtonItem.activityIndicator.startAnimating()
+            : rightBarButtonItem.activityIndicator.stopAnimating()
     }
     
     func showNewMessageContainer(_ show: Bool) {
-        UIView.animate(withDuration: 0.2) {
-            self.bottomSafeAreaView.alpha = show ? 1 : 0
-            self.newMessageContainerView.alpha = show ? 1 : 0
-            self.messageBarHeightConstraint.constant = show ? 52 : 0
-            var additionalInset: CGFloat = 0.0
-            if #available(iOS 11.0, *)
-            { additionalInset = self.view.safeAreaInsets.bottom }
-            self.safeAreaBarHeightConstraint.constant = show ? additionalInset : 0
+        UIView.animate(withDuration: 0.1) {
+            self.messageContainerView.alpha = show ? 1 : 0
         }
     }
     
@@ -257,7 +222,7 @@ final class ActiveConversationViewController:
         return view
     }
     
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { return 4 }
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { 4 }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
@@ -265,7 +230,7 @@ final class ActiveConversationViewController:
         return view
     }
     
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat { return 4 }
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat { 4 }
     
     // MARK: - UITextViewDelegate -
     func textViewDidBeginEditing(_ textView: UITextView) {

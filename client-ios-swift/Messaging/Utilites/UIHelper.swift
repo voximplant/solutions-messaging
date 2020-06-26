@@ -5,7 +5,6 @@
 import UIKit
 
 final class UIHelper {    
-    // MARK: Show errors methods
     static func ShowError(error: String, action: UIAlertAction? = nil, controller: UIViewController? = nil) {
         DispatchQueue.main.async {
             if let rootViewController = UIApplication.shared.keyWindow?.rootViewController  {
@@ -30,7 +29,15 @@ final class UIHelper {
     // MARK: - Loading HUD Methods
     private static let loadingWindow = LoadingWindow()
     
-    static func showLoading(with title: String) { loadingWindow.set(state: .active(text: title)) }
+    static func showLoading(with title: String) {
+        DispatchQueue.main.async {
+            loadingWindow.set(state: .active(text: title))
+        }
+    }
     
-    static func hideLoading() { loadingWindow.set(state: .inactive) }
+    static func hideLoading() {
+        DispatchQueue.main.async {
+            loadingWindow.set(state: .inactive)
+        }
+    }
 }

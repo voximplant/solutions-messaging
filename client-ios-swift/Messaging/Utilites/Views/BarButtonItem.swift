@@ -23,6 +23,7 @@ final class BarButtonItem: UIBarButtonItem {
                 isEnabled = true
             case .none:
                 tintColor = .clear
+                title = ""
                 isEnabled = false
             }
         }

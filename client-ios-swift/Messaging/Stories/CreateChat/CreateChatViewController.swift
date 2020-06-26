@@ -4,26 +4,33 @@
 
 import UIKit
 
-protocol CreateChatViewInput: AnyObject, UIIndicator {
-    var userListView: UserListView! { get }
+protocol CreateChatViewInput: AnyObject, HUDShowable {
     var conversationInfoView: ProfileInfoView! { get }
-    func setTitle(_ text: String)
-    func userInteraction(allowed: Bool)
+    var title: String? { get set }
+    func allowInteraction(_ allow: Bool)
 }
 
-protocol CreateChatViewOutput: AnyObject, ControllerLifeCycle {
-    func createChatPressed()
+protocol CreateChatViewOutput: AnyObject, ControllerLifeCycleObserver {
+    func createChat()
 }
 
-final class CreateChatViewController: ViewController, CreateChatViewInput {
-    var output: CreateChatViewOutput!
+final class CreateChatViewController: UIViewController, CreateChatViewInput {
+    var output: CreateChatViewOutput! // DI
+    let userListView: UserListView = UserListView()
     
-    @IBOutlet weak var createButton: UIBarButtonItem!
+    @IBOutlet private weak var createButton: UIBarButtonItem!
     @IBOutlet weak var conversationInfoView: ProfileInfoView!
-    @IBOutlet weak var userListView: UserListView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.addSubview(userListView)
+        userListView.translatesAutoresizingMaskIntoConstraints = false
+        userListView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        userListView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        userListView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        userListView.topAnchor.constraint(equalTo: conversationInfoView.bottomAnchor).isActive = true
+        
         hideKeyboardWhenTappedAround()
         output?.viewDidLoad()
     }
@@ -33,16 +40,24 @@ final class CreateChatViewController: ViewController, CreateChatViewInput {
         output.viewWillAppear()
     }
     
-    // MARK: - CreateChatViewInput
-    func setTitle(_ text: String) { title = text }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        output.viewDidAppear()
+    }
     
-    func userInteraction(allowed: Bool) {
-        view.isUserInteractionEnabled = allowed
-        createButton.isEnabled = allowed
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
+    // MARK: - CreateChatViewInput
+    func allowInteraction(_ allow: Bool) {
+        view.isUserInteractionEnabled = allow
+        createButton.isEnabled = allow
     }
     
     // MARK: - CreateChatViewOutput
     @IBAction func createChatButtonPressed(_ sender: UIBarButtonItem) {
-        output?.createChatPressed()
+        output?.createChat()
     }
 }

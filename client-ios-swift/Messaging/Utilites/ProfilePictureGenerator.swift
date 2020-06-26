@@ -9,10 +9,6 @@ func floorToScreenPixels(_ value: CGFloat) -> CGFloat {
     return floor(value * UIScreenScale) / UIScreenScale
 }
 
-
-import Foundation
-import UIKit
-
 public final class ProfilePictureGenerator {
     
     static func generatePicture(with imageName: String?, and title: String, for bounds: CGRect) -> UIImage {

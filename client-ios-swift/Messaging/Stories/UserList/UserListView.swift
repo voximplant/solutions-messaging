@@ -4,96 +4,116 @@
 
 import UIKit
 
-protocol UserListViewInput: AnyObject {
-    func setupTableView(with dataSource: UserListTableViewDataSource)
+protocol UserListViewInput: AnyObject, TableViewControlling {
     func setSelected(_ selected: Bool, cellAt indexPath: IndexPath)
-    func reloadTableView()
-    func showActivityIndicator()
-    func hideActivityIndicator()
-    func allowTableViewEditing()
+    func allowEditing(_ allow: Bool)
 }
 
-protocol UserListViewOutput: UserListInput {
+protocol UserListViewOutput {
+    var numberOfUsers: Int { get }
+    func getConfiguratorForCell(at indexPath: IndexPath) -> CellConfigurator
     func viewDidLoad()
-    func didSelectRow(at indexPath: IndexPath)
-    func didEditRow(at indexPath: IndexPath)
+    func didSelectUser(at indexPath: IndexPath)
+    func didDeleteUser(at indexPath: IndexPath)
 }
 
-final class UserListView: UIView, NibLoadable, UserListViewInput, UserListTableViewDelegate {
-    var presenter: UserListViewOutput!
+final class UserListView:
+    UIView,
+    NibLoadable,
+    UserListViewInput,
+    UserListTableViewDelegate,
+    UITableViewDataSource
+{
+    var output: UserListViewOutput! { // DI
+        didSet {
+            userTableView.delegate = self
+            userTableView.dataSource = self
+        }
+    }
     
-    @IBOutlet private weak var tableView: UserListTableView!
+    @IBOutlet private weak var userTableView: UserListTableView!
     @IBOutlet private weak var activityIndicatorView: UIActivityIndicatorView!
+    
+    private var isEditingAllowed: Bool { userTableView.allowsEditing }
+    var tableView: UITableView { userTableView }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        setupFromNib()
         sharedInit()
     }
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-        setupFromNib()
         sharedInit()
     }
     
     private func sharedInit() {
-        presenter = UserListPresenter(view: self)
-        presenter?.viewDidLoad()
+        setupFromNib()
+        userTableView.tableFooterView = UIView()
+        output?.viewDidLoad()
     }
     
     // MARK: - UserListViewInput
     func setSelected(_ selected: Bool, cellAt indexPath: IndexPath) {
-        if let cell = tableView.cellForRow(at: indexPath)
-        { cell.isChoosen = selected }
+        if let cell = userTableView.cellForRow(at: indexPath) as? UserListCell {
+            cell.isChoosen = selected
+        }
     }
     
-    func setupTableView(with dataSource: UserListTableViewDataSource) {
-        tableView.delegate = self
-        tableView.dataSource = dataSource
+    func showLoading(_ show: Bool) {
+        if show {
+            activityIndicatorView.isHidden = false
+            activityIndicatorView.startAnimating()
+        } else {
+            activityIndicatorView.stopAnimating()
+        }
     }
     
-    func reloadTableView() {
-        DispatchQueue.main.async { self.tableView.reloadData() }
+    func allowEditing(_ allow: Bool) {
+        userTableView.allowsEditing = allow
     }
-    
-    func showActivityIndicator() {
-        activityIndicatorView.isHidden = false
-        activityIndicatorView.startAnimating()
-    }
-    
-    func hideActivityIndicator() {
-        activityIndicatorView.stopAnimating()
-    }
-    
-    func allowTableViewEditing() { tableView.allowsEditing = true }
     
     // MARK: - UITableViewDelegate
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        presenter?.didSelectRow(at: indexPath)
-    }
-    
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        UIView()
-    }
-    
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        1   
+        output?.didSelectUser(at: indexPath)
     }
     
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         .delete
     }
     
-    func didDeleteRow(at indexPath: IndexPath) {
-         presenter.didEditRow(at: indexPath)
+    func didDeleteUser(at indexPath: IndexPath) {
+        output.didDeleteUser(at: indexPath)
     }
-}
-
-extension UserListTableView {
-    override func cellForRow(at indexPath: IndexPath) -> UserListCell? {
-        if let cell = super.cellForRow(at: indexPath) as? UserListCell { return cell }
-        else { return nil }
+    
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        output.numberOfUsers
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let configurator = output.getConfiguratorForCell(at: indexPath)
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: type(of: configurator).reuseId, for: indexPath)
+        configurator.configure(cell: cell)
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        isEditingAllowed
+    }
+    
+    func tableView(
+        _ tableView: UITableView,
+        commit editingStyle: UITableViewCell.EditingStyle,
+        forRowAt indexPath: IndexPath
+    ) {
+        if editingStyle == .delete {
+            if let tableView = tableView as? UserListTableView {
+                tableView.delegateInterceptor?.didDeleteUser(at: indexPath)
+            }
+        }
     }
 }

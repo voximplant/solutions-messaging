@@ -9,12 +9,29 @@ protocol CreateDirectConfiguratorProtocol: AnyObject {
 }
 
 final class CreateDirectConfigurator: CreateDirectConfiguratorProtocol {
+    private let repositopy: Repository
+    private let userDataSource: UserDataSource
+    
+    required init(repository: Repository, userDataSource: UserDataSource) {
+        self.repositopy = repository
+        self.userDataSource = userDataSource
+    }
+    
     func configure(with viewController: CreateDirectViewController) {
         let presenter = CreateDirectPresenter(view: viewController)
-        let interactor = CreateDirectInteractor(output: presenter)
-        let router = CreateDirectRouter(viewController: viewController)
-        
+        let userListPresenter = UserListPresenter(
+            view: viewController.userListView,
+            output: presenter
+        )
+        viewController.userListView.output = userListPresenter
+        presenter.userListInput = userListPresenter
         viewController.output = presenter
+        let interactor = CreateDirectInteractor(
+            output: presenter,
+            repository: repositopy,
+            userDataSource: userDataSource
+        )
+        let router = CreateDirectRouter(viewController: viewController)
         presenter.interactor = interactor
         presenter.router = router
     }

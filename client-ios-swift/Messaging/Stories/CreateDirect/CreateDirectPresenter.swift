@@ -4,89 +4,62 @@
 
 import Foundation
 
-final class CreateDirectPresenter: Presenter, CreateDirectViewOutput, CreateDirectInteractorOutput, UserListOutput {
-    weak var view: CreateDirectViewInput?
-
-    var interactor: CreateDirectInteractorInput!
-    var router: CreateDirectRouterInput!
+final class CreateDirectPresenter:
+    ControllerLifeCycleObserver,
+    CreateDirectViewOutput,
+    CreateDirectInteractorOutput,
+    UserListOutput,
+    MainQueuePerformable
+{
+    private weak var view: CreateDirectViewInput?
+    var interactor: CreateDirectInteractorInput! // DI
+    var router: CreateDirectRouterInput! // DI
+    var userListInput: UserListInput! // DI
     
-    var userListInput: UserListInput!
-    var userListUsers: [User]?
+    var numberOfUsers: Int { interactor.numberOfUsers }
     
-    required init(view: CreateDirectViewInput) { self.view = view }
+    init(view: CreateDirectViewInput) { self.view = view }
     
     // MARK: - UserListOutput
-    func didSelectUser(with index: Int) {
-        guard let users = userListUsers else { return }
-        
+    func didSelectUser(at index: Int) {
         view?.showHUD(with: "Creating...")
-        interactor.createDirect(with: users[index])
+        interactor.createDirect(with: interactor.getUser(at: IndexPath(row: index, section: 0)).id)
+    }
+    
+    func getUser(at indexPath: IndexPath) -> User {
+        interactor.getUser(at: indexPath)
+    }
+    
+    func subscribeOnUserChanges(_ observer: DataSourceObserver<User>) {
+        interactor.setupObservers(observer)
     }
 
     // MARK: - CreateDirectViewOutput
     // MARK: - User
-    func didEdit(user: User) {
-        guard view != nil else { return }
-
-        if let index = userListUsers?.firstIndex (where: { $0.imID == user.imID }) {
-            userListUsers?[index] = user
-            userListInput.updateList(with: userListUsers!.map { buildUserListCellModel(with: $0) })
-        }
+    func viewDidLoad() {
+        userListInput.type = .singlePick
     }
     
-    override func viewDidLoad() {
-        setupUserList()
-        interactor.requestUsers()
+    func openCreateChannel() {
+        router.showCreateChatStory(of: .channel)
     }
     
-    override func viewWillAppear() { interactor.setupDelegates() }
-    
-    func channelButtonPressed() {
-        router.showCreateChatStory(of: .channel, with: userListUsers ?? [])
-    }
-    
-    func groupChatButtonPressed() {
-        router.showCreateChatStory(of: .chat, with: userListUsers ?? [])
+    func openCreateChat() {
+        router.showCreateChatStory(of: .chat)
     }
     
     // MARK: - CreateDirectInteractorOutput
-    func conversationCreated(conversation model: Conversation) {
-        view?.hideHUD()
-        router.showConversationScreen(with: model)
+    func conversationCreated(_ conversation: Conversation) {
+        onMainQueue {
+            self.view?.hideHUD()
+            self.router.showConversationScreen(with: conversation)
+        }
     }
     
     func failedToCreateConversation(with error: Error) {
-        view?.hideHUD()
-        view?.showError(with: error.localizedDescription)
-    }
-    
-    func usersLoaded(_ userArray: [User]) {
-        userListUsers = userArray
-        if let indexOfMe = userListUsers!.firstIndex(where: { $0.imID == interactor.me.imID })
-        { userListUsers!.remove(at: indexOfMe) }
-    
-        userListInput.updateList(with: userListUsers!.map { buildUserListCellModel(with: $0) })
-    }
-    
-    func usersLoadingFailed(with error: String) {
-        view?.showError(with: error)
-    }
-    
-    override func connectionLost() { view?.showError(with: "Cant connect") }
-    
-    override func tryingToLogin() { view?.showHUD(with: "Connecting...") }
-    
-    override func loginCompleted() { view?.hideHUD() }
-
-    // MARK: - Private
-    private func setupUserList() {
-        guard let view = view else { return }
-        view.userListView.presenter.userListOutput = self // TODO: - refactor
-        userListInput = view.userListView.presenter
-        view.userListView.presenter.type = .singlePick
-    }
-    
-    private func buildUserListCellModel(with user: User) -> UserListCellModel {
-        return UserListCellModel(displayName: user.displayName, pictureName: user.pictureName, isChoosen: false)
+        onMainQueue {
+            self.view?.hideHUD()
+            self.view?.showError(error)
+        }
     }
 }

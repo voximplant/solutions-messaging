@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16097" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="PictureSelectorView" customModule="Messaging" customModuleProvider="target">
+            <connections>
+                <outlet property="bottomStackView" destination="P4z-CN-Nou" id="KfA-TS-ugv"/>
+                <outlet property="containerView" destination="pns-zd-sAK" id="bV4-tl-UIa"/>
+                <outlet property="saveButton" destination="IW9-Sn-BQn" id="jTF-pA-9ic"/>
+                <outlet property="topStackView" destination="9tB-Ez-Q0L" id="LaL-h2-ISA"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view contentMode="scaleToFill" id="iN0-l3-epB">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="E4e-gu-JVb">
+                    <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+                    <color key="backgroundColor" white="0.25" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                </view>
+                <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="pns-zd-sAK">
+                    <rect key="frame" x="39.5" y="315.5" width="335" height="275"/>
+                    <subviews>
+                        <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="u6k-Xh-uHA">
+                            <rect key="frame" x="5" y="225" width="325" height="50"/>
+                            <subviews>
+                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="6rc-mY-iqC">
+                                    <rect key="frame" x="0.0" y="8.5" width="162.5" height="33"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                    <state key="normal" title="Cancel">
+                                        <color key="titleColor" red="0.96078431369999995" green="0.29411764709999999" blue="0.36862745099999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="cancelButtonPressed:" destination="-1" eventType="touchUpInside" id="evn-5t-sA1"/>
+                                    </connections>
+                                </button>
+                                <button opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="IW9-Sn-BQn">
+                                    <rect key="frame" x="162.5" y="8.5" width="162.5" height="33"/>
+                                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                    <state key="normal" title="Save">
+                                        <color key="titleColor" red="0.40000000000000002" green="0.18039215689999999" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    </state>
+                                    <connections>
+                                        <action selector="saveButtonPressed:" destination="-1" eventType="touchUpInside" id="Gil-yI-ADK"/>
+                                    </connections>
+                                </button>
+                            </subviews>
+                            <color key="backgroundColor" systemColor="secondarySystemGroupedBackgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="50" id="42h-gI-QOa"/>
+                            </constraints>
+                        </stackView>
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="eEE-Jm-yPH">
+                            <rect key="frame" x="0.0" y="224" width="335" height="1"/>
+                            <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="1" id="lWy-9v-44Q"/>
+                            </constraints>
+                        </view>
+                        <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="QbI-yc-xL3">
+                            <rect key="frame" x="167" y="225" width="1" height="50"/>
+                            <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                            <constraints>
+                                <constraint firstAttribute="width" constant="1" id="1Nx-vw-ZCs"/>
+                            </constraints>
+                        </view>
+                        <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" distribution="fillEqually" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="0LM-AD-bvy">
+                            <rect key="frame" x="4" y="4" width="327" height="216"/>
+                            <subviews>
+                                <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="9tB-Ez-Q0L" customClass="SelectableStackView" customModule="SelectableStackView">
+                                    <rect key="frame" x="0.0" y="0.0" width="327" height="106"/>
+                                    <userDefinedRuntimeAttributes>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="noSelectionAllowed" value="YES"/>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="multipleSelectionAllowed" value="NO"/>
+                                    </userDefinedRuntimeAttributes>
+                                </stackView>
+                                <stackView opaque="NO" contentMode="scaleToFill" distribution="fillEqually" spacing="4" translatesAutoresizingMaskIntoConstraints="NO" id="P4z-CN-Nou" customClass="SelectableStackView" customModule="SelectableStackView">
+                                    <rect key="frame" x="0.0" y="110" width="327" height="106"/>
+                                    <userDefinedRuntimeAttributes>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="noSelectionAllowed" value="YES"/>
+                                        <userDefinedRuntimeAttribute type="boolean" keyPath="multipleSelectionAllowed" value="NO"/>
+                                    </userDefinedRuntimeAttributes>
+                                </stackView>
+                            </subviews>
+                        </stackView>
+                    </subviews>
+                    <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="335" id="0m6-LS-Fw0"/>
+                        <constraint firstItem="QbI-yc-xL3" firstAttribute="centerX" secondItem="pns-zd-sAK" secondAttribute="centerX" id="AtY-Ll-ygv"/>
+                        <constraint firstItem="u6k-Xh-uHA" firstAttribute="leading" secondItem="pns-zd-sAK" secondAttribute="leading" constant="5" id="BV5-yq-f2c"/>
+                        <constraint firstAttribute="trailing" secondItem="u6k-Xh-uHA" secondAttribute="trailing" constant="5" id="Bg7-8f-NMD"/>
+                        <constraint firstAttribute="height" constant="275" id="FKK-J3-TPW"/>
+                        <constraint firstItem="QbI-yc-xL3" firstAttribute="height" secondItem="u6k-Xh-uHA" secondAttribute="height" id="Jht-5W-Ybo"/>
+                        <constraint firstItem="u6k-Xh-uHA" firstAttribute="top" secondItem="eEE-Jm-yPH" secondAttribute="bottom" id="ViU-0Y-veD"/>
+                        <constraint firstItem="eEE-Jm-yPH" firstAttribute="leading" secondItem="pns-zd-sAK" secondAttribute="leading" id="a6q-kI-UrN"/>
+                        <constraint firstItem="0LM-AD-bvy" firstAttribute="top" secondItem="pns-zd-sAK" secondAttribute="top" constant="4" id="aDh-uZ-Kt7"/>
+                        <constraint firstItem="0LM-AD-bvy" firstAttribute="leading" secondItem="pns-zd-sAK" secondAttribute="leading" constant="4" id="bmx-fP-21S"/>
+                        <constraint firstAttribute="bottom" secondItem="QbI-yc-xL3" secondAttribute="bottom" id="ecl-DQ-7gn"/>
+                        <constraint firstAttribute="trailing" secondItem="0LM-AD-bvy" secondAttribute="trailing" constant="4" id="fFc-SX-IfV"/>
+                        <constraint firstAttribute="bottom" secondItem="u6k-Xh-uHA" secondAttribute="bottom" id="hMz-6K-Xg2"/>
+                        <constraint firstItem="eEE-Jm-yPH" firstAttribute="top" secondItem="0LM-AD-bvy" secondAttribute="bottom" constant="4" id="l1Z-oh-Iby"/>
+                        <constraint firstAttribute="trailing" secondItem="eEE-Jm-yPH" secondAttribute="trailing" id="uYh-hT-ENz"/>
+                    </constraints>
+                </view>
+            </subviews>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <constraints>
+                <constraint firstAttribute="bottom" secondItem="E4e-gu-JVb" secondAttribute="bottom" id="3cW-Hf-uLH"/>
+                <constraint firstItem="E4e-gu-JVb" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="7as-0x-rwd"/>
+                <constraint firstItem="pns-zd-sAK" firstAttribute="centerX" secondItem="vUN-kp-3ea" secondAttribute="centerX" id="Qov-7w-0GQ"/>
+                <constraint firstItem="pns-zd-sAK" firstAttribute="centerY" secondItem="vUN-kp-3ea" secondAttribute="centerY" id="at2-jE-mzH"/>
+                <constraint firstItem="E4e-gu-JVb" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="gxN-Ly-48U"/>
+                <constraint firstAttribute="trailing" secondItem="E4e-gu-JVb" secondAttribute="trailing" id="kX7-ga-2LV"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="vUN-kp-3ea"/>
+            <userDefinedRuntimeAttributes>
+                <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+                    <integer key="value" value="12"/>
+                </userDefinedRuntimeAttribute>
+            </userDefinedRuntimeAttributes>
+            <point key="canvasLocation" x="137.68115942028987" y="74.330357142857139"/>
+        </view>
+    </objects>
+</document>

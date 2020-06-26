@@ -4,28 +4,27 @@
 
 import UIKit
 
-protocol SettingsViewInput: AnyObject, UIIndicator {
+protocol SettingsViewInput: AnyObject, HUDShowable {
     var profileHeaderView: ProfileInfoView! { get }
     func allowEditing(_ allow: Bool)
-    func setupHeaderViewAppearance(with model: UserProfileModel)
 }
 
-protocol SettingsViewOutput: AnyObject, ControllerLifeCycle {
-    func logoutPressed()
+protocol SettingsViewOutput: AnyObject, ControllerLifeCycleObserver {
+    func logout()
     func editButtonPressed()
     func saveButtonPressed()
 }
 
-final class SettingsViewController: ViewController, SettingsViewInput {
-    var output: SettingsViewOutput!
+final class SettingsViewController: UIViewController, SettingsViewInput {
+    var output: SettingsViewOutput! // DI
     
     @IBOutlet weak var profileHeaderView: ProfileInfoView!
-    @IBOutlet weak var rightBarButton: BarButtonItem!
+    @IBOutlet private weak var rightBarButton: BarButtonItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        output.viewDidLoad()
         rightBarButton.buttonAction = .edit
+        output.viewDidLoad()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -33,8 +32,18 @@ final class SettingsViewController: ViewController, SettingsViewInput {
         output.viewWillAppear()
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        output.viewDidAppear()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
     @IBAction func logoutButtonPressed(_ sender: Any) {
-        output?.logoutPressed()
+        output?.logout()
     }
 
     @IBAction func barButtonPressed(_ sender: BarButtonItem) {
@@ -44,12 +53,7 @@ final class SettingsViewController: ViewController, SettingsViewInput {
     
     // MARK: - SettingsViewInput
     func allowEditing(_ allow: Bool) {
-        profileHeaderView.isEditable = allow
         rightBarButton.buttonAction = allow ? .save : .edit
+        profileHeaderView.setState(allow ? .editing : .normal)
     }
-    
-    func setupHeaderViewAppearance(with model: UserProfileModel) {
-        profileHeaderView.type = .user(model: model)
-    }
-    
 }

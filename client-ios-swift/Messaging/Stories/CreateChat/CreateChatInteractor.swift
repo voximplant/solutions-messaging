@@ -5,87 +5,103 @@
 import Foundation
 
 protocol CreateChatInteractorInput: AnyObject {
-    var me: User { get }
-    func setupDelegates()
-    func createChannel(with title: String, imageName: String?, description: String, and userModelArray: [User])
-    func createConversation(with title: String, and userModelArray: [User], imageName: String?, description: String, isPublic: Bool, isUber: Bool)
-    func requestUsers()
+    var numberOfUsers: Int { get }
+    func getUser(at indexPath: IndexPath) -> User
+    func createChannel(title: String, users: Set<User.ID>,
+                       imageName: String?, description: String)
+    func createConversation(title: String, users: Set<User.ID>,
+                            imageName: String?, description: String,
+                            isPublic: Bool, isUber: Bool)
+    func setupObservers(_ observer: DataSourceObserver<User>)
 }
 
-protocol CreateChatInteractorOutput: AnyObject, ConnectionEvents {
-    func chatCreated(_ model :Conversation)
+protocol CreateChatInteractorOutput: AnyObject {
+    func chatCreated(_ model: Conversation)
     func failedToCreateChat(with error: Error)
-    func usersLoaded(_ users: [User])
-    func usersLoadingFailed(with error: Error)
-    func didEdit(user: User)
 }
 
-final class CreateChatInteractor: CreateChatInteractorInput, RepositoryDelegate, AuthServiceDelegate {
-    weak var output: CreateChatInteractorOutput?
+final class CreateChatInteractor: CreateChatInteractorInput {
+    private weak var output: CreateChatInteractorOutput?
+    private let repository: Repository
+    private let userDataSource: UserDataSource
+    private var userObserver: DataSourceObserver<User>?
     
-    private let authService: AuthServiceProtocol = sharedAuthService
-    private let repository: Repository = sharedRepository
+    var numberOfUsers: Int { userDataSource.getNumberOfUsers(includingMe: false) }
     
-    var me: User { return repository.me! }
-    
-    required init(output: CreateChatInteractorOutput) { self.output = output }
-    
-    // MARK: - CreateDirectInteractorInput
-    func setupDelegates() {
-        repository.set(delegate: self)
-        authService.set(delegate: self)
+    init(output: CreateChatInteractorOutput,
+         repository: Repository,
+         userDataSource: UserDataSource
+    ) {
+        self.output = output
+        self.repository = repository
+        self.userDataSource = userDataSource
     }
     
-    func requestUsers() {
-        repository.requestAllUsers { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.usersLoadingFailed(with: error) }
-            if case .success (let userModelArray) = result { self.output?.usersLoaded(userModelArray) }
+    deinit {
+        removeObservers()
+    }
+    
+    // MARK: - CreateDirectInteractorInput
+    func getUser(at indexPath: IndexPath) -> User {
+        userDataSource.getUser(at: indexPath, includingMe: false)
+    }
+    
+    func setupObservers(_ observer: DataSourceObserver<User>) {
+        userObserver = observer
+        userDataSource.observeUsers(includingMe: false, observer: observer)
+    }
+    
+    func removeObservers() {
+        if let observer = userObserver {
+            userDataSource.removeObserver(observer)
+            userObserver = nil
         }
     }
     
     // MARK: - CreateChatInteractorInput
-    func createConversation(with title: String, and userModelArray: [User], imageName: String?, description: String, isPublic: Bool, isUber: Bool) {
-        repository.createGroupConversation(with: title, and: userModelArray, description: description,
-                                           pictureName: imageName, isPublic: isPublic, isUber: isUber)
-        { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.failedToCreateChat(with: error) }
-            if case .success (let conversationModel) = result { self.output?.chatCreated(conversationModel) }
+    func createConversation(
+        title: String,
+        users: Set<User.ID>,
+        imageName: String?,
+        description: String,
+        isPublic: Bool,
+        isUber: Bool
+    ) {
+        repository.createGroupConversation(
+            with: title,
+            and: users,
+            description: description,
+            pictureName: imageName,
+            isPublic: isPublic,
+            isUber: isUber
+        ) { [weak self] result in
+            if case .success (let conversation) = result {
+                self?.output?.chatCreated(conversation)
+            }
+            if case .failure (let error) = result {
+                self?.output?.failedToCreateChat(with: error)
+            }
         }
     }
     
-    func createChannel(with title: String, imageName: String?, description: String, and userModelArray: [User]) {
-        repository.createChannel(with: title, and: userModelArray, description: description, pictureName: imageName)
-        { [weak self] result in
-            guard let self = self else { return }
-            if case .failure (let error) = result { self.output?.failedToCreateChat(with: error) }
-            if case .success (let conversationModel) = result { self.output?.chatCreated(conversationModel) }
+    func createChannel(
+        title: String,
+        users: Set<User.ID>,
+        imageName: String?,
+        description: String
+    ) {
+        repository.createChannel(
+            with: title,
+            and: users,
+            description: description,
+            pictureName: imageName
+        ) { [weak self] result in
+            if case .success (let conversation) = result {
+                self?.output?.chatCreated(conversation)
+            }
+            if case .failure (let error) = result {
+                self?.output?.failedToCreateChat(with: error)
+            }
         }
-    }
-    
-    // MARK: - MessagingRepositoryDelegate
-    func didReceiveUserEvent(_ event: UserEvent) {
-        guard let output = output else { return }
-        switch event.action {
-        case .editUser: output.didEdit(user: event.initiator)
-        }
-    }
-    
-    // MARK: - AuthServiceDelegate
-    func didDisconnect() {
-        output?.connectionLost()
-    }
-    
-    func reconnecting() {
-        output?.tryingToLogin()
-    }
-    
-    func didLogin(with displayName: String) {
-        output?.loginCompleted()
-    }
-    
-    func didFailToLogin(with error: Error) {
-        output?.tryingToLogin()
     }
 }

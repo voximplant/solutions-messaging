@@ -24,12 +24,11 @@ class Button: UIButton {
         addTarget(self, action: #selector(decreaseButtonSize(_:)), for: [.touchDown, .touchDragInside])
     }
     
-    @objc func decreaseButtonSize(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.1, animations: { sender.transform = CGAffineTransform(scaleX: 0.93, y: 0.93) })
+    @objc private func decreaseButtonSize(_ sender: UIButton) {
+        UIView.animate(withDuration: 0.1, animations: { sender.transform = CGAffineTransform(scaleX: 0.95, y: 0.95) })
     }
     
-    @objc func backToNormalSize(_ sender: UIButton) {
+    @objc private func backToNormalSize(_ sender: UIButton) {
         UIView.animate(withDuration: 0.1) { sender.transform = CGAffineTransform.identity }
     }
-
 }

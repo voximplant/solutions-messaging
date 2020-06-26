@@ -4,28 +4,42 @@
 
 import UIKit
 
-protocol ConversationsViewInput: AnyObject, UIIndicator {
-    func refresh()
-    func updateRow(at indexPath: IndexPath)
-    func removeRow(at indexPath: IndexPath)
-    func insertRow(at indexPath: IndexPath)
-    func configureTableView(with dataSource: UITableViewDataSource)
+protocol ConversationsViewInput: AnyObject, HUDShowable, TableViewControlling {
+    var showEmptiness: Bool { get set }
 }
 
-protocol ConversationsViewOutput: AnyObject, ControllerLifeCycle {
-    func rightBarButtonPressed()
-    func leftBarButtonPressed()
-    func didSelectRow(with indexPath: IndexPath)
-    func didAppearAfterRemoving(conversation: Conversation)
+protocol ConversationsViewOutput: AnyObject, ControllerLifeCycleObserver {
+    func createConversationPressed()
+    func profilePressed()
+    func didSelectRow(at indexPath: IndexPath)
+    func getConfiguratorForCell(at indexPath: IndexPath) -> CellConfigurator
+    var numberOfRows: Int { get }
 }
 
-final class ConversationsViewController: ViewController, ConversationsViewInput, UITableViewDelegate {
-    var output: ConversationsViewOutput!
+final class ConversationsViewController:
+    UIViewController,
+    ConversationsViewInput,
+    UITableViewDelegate,
+    UITableViewDataSource
+{
+    var output: ConversationsViewOutput! // DI
 
-    @IBOutlet private weak var tableView: ConversationsTableView!
+    @IBOutlet private weak var emptyListLabel: UILabel!
+    @IBOutlet private weak var conversationsTableView: ConversationsTableView!
+    var tableView: UITableView { conversationsTableView }
+    
+    var showEmptiness: Bool {
+        get { conversationsTableView.isHidden }
+        set { conversationsTableView.isHidden = newValue }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        conversationsTableView.tableFooterView = UIView()
+        conversationsTableView.delegate = self
+        conversationsTableView.dataSource = self
+        
         output?.viewDidLoad()
     }
     
@@ -39,48 +53,36 @@ final class ConversationsViewController: ViewController, ConversationsViewInput,
         output.viewDidAppear()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
     @IBAction private func rightBarButtonPressed(_ sender: UIBarButtonItem) {
-        output?.rightBarButtonPressed()
+        output?.createConversationPressed()
     }
 
     @IBAction private func leftBarButtonPressed(_ sender: UIBarButtonItem) {
-        output?.leftBarButtonPressed()
-    }
-    
-    // MARK: - ConversationsViewInput -
-    func configureTableView(with dataSource: UITableViewDataSource) {
-        tableView.delegate = self
-        tableView.dataSource = dataSource
-    }
-    
-    func refresh() {
-        if tableView.numberOfSections > 0 {
-            tableView.reloadSections(IndexSet(integer: 0), with: .automatic)
-        } else {
-            tableView.reloadData()
-        }
-    }
-    
-    func updateRow(at indexPath: IndexPath) {
-        tableView.reloadRows(at: [indexPath], with: .automatic)
-    }
-    
-    func removeRow(at indexPath: IndexPath) {
-        tableView.deleteRows(at: [indexPath], with: .automatic)
-    }
-    
-    func insertRow(at indexPath: IndexPath) {
-        tableView.insertRows(at: [indexPath], with: .automatic)
+        output?.profilePressed()
     }
     
     // MARK: - UITableViewDelegate -
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        output?.didSelectRow(with: indexPath)
+        output?.didSelectRow(at: indexPath)
     }
     
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? { return UIView() }
+    // MARK: - UITableViewDataSource -
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+       output.numberOfRows
+    }
     
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat { return 1 }
-    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let configurator = output.getConfiguratorForCell(at: indexPath)
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: type(of: configurator).reuseId, for: indexPath)
+        configurator.configure(cell: cell)
+        
+        return cell
+    }
 }

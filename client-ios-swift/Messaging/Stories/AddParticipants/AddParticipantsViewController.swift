@@ -4,24 +4,32 @@
 
 import UIKit
 
-protocol AddParticipantsViewInput: AnyObject, UIIndicator {
-    var userList: UserListView! { get }
-    func updateTitle(with text: String)
-    func enableAddButton(_ enable: Bool)
+protocol AddParticipantsViewInput: AnyObject, HUDShowable {
+    var userListView: UserListView { get }
+    var title: String? { get set }
+    func allowAdding(_ allow: Bool)
 }
 
-protocol AddParticipantsViewOutput: AnyObject, ControllerLifeCycle {
+protocol AddParticipantsViewOutput: AnyObject, ControllerLifeCycleObserver {
     func addButtonPressed()
 }
 
-final class AddParticipantsViewController: ViewController, AddParticipantsViewInput {
-    var output: AddParticipantsViewOutput!
-        
+final class AddParticipantsViewController: UIViewController, AddParticipantsViewInput {
+    var output: AddParticipantsViewOutput! // DI
+    let userListView: UserListView = UserListView()
+    
     @IBOutlet private weak var addButton: UIBarButtonItem!
-    @IBOutlet weak var userList: UserListView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.addSubview(userListView)
+        userListView.translatesAutoresizingMaskIntoConstraints = false
+        userListView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        userListView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        userListView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        userListView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        
         output.viewDidLoad()
     }
     
@@ -35,16 +43,17 @@ final class AddParticipantsViewController: ViewController, AddParticipantsViewIn
         output.viewDidAppear()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        output.viewWillDisappear()
+    }
+    
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         output.addButtonPressed()
     }
     
     // MARK: - AddParticipantsViewInput -
-    func enableAddButton(_ enable: Bool) {
-        addButton.isEnabled = enable
-    }
-    
-    func updateTitle(with text: String) {
-        title = text
+    func allowAdding(_ allow: Bool) {
+        addButton.isEnabled = allow
     }
 }

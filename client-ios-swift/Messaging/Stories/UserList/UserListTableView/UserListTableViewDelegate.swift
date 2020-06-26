@@ -5,5 +5,5 @@
 import UIKit
 
 protocol UserListTableViewDelegate: UITableViewDelegate {
-    func didDeleteRow(at indexPath: IndexPath)
+    func didDeleteUser(at indexPath: IndexPath)
 }

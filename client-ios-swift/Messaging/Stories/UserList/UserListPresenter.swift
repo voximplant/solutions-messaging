@@ -11,75 +11,98 @@ enum UserListType {
 }
 
 protocol UserListInput: AnyObject {
-    var userListOutput: UserListOutput? { get set }
-    var type: UserListType! { get set }
-    var userListModels: [UserListCellModel] { get }
-    func updateList(with cellModelArray: [UserListCellModel])
+    var selectedUserIDs: Set<User.ID> { get }
+    var type: UserListType? { get set }
+    func refresh()
+    func cleanSelectedUsers()
 }
 
 protocol UserListOutput: AnyObject {
-    var userListInput: UserListInput! { get set }
-    func didSelectUser(with index: Int)
-    func didRemoveUser(with index: Int)
-    func didUpdateList(with modelArray: [UserListCellModel])
+    var numberOfUsers: Int { get }
+    func getUser(at indexPath: IndexPath) -> User
+    
+    func didSelectUser(at index: Int)
+    func didRemoveUser(at index: Int)
+    
+    func subscribeOnUserChanges(_ observer: DataSourceObserver<User>)
 }
 
 extension UserListOutput {
-    func didSelectUser(with index: Int) { }
-    func didRemoveUser(with index: Int) { }
-    func didUpdateList(with modelArray: [UserListCellModel]) { }
+    func didSelectUser(at index: Int) { }
+    func didRemoveUser(at index: Int) { }
+    func subscribeOnUserChanges(_ observer: DataSourceObserver<User>) { }
 }
 
-fileprivate typealias UserCellConfigurator = TableCellConfigurator<UserListCell, UserListCellModel>
-
-final class UserListPresenter: UserListViewOutput {
-    weak var view: UserListViewInput?
+final class UserListPresenter: UserListViewOutput, UserListInput {
+    private typealias UserCellConfigurator
+        = TableCellConfigurator<UserListCell, UserListCellModel>
     
-    weak var userListOutput: UserListOutput?
-    var type: UserListType! {
+    private weak var view: UserListViewInput?
+    private let userListOutput: UserListOutput
+    private(set) var selectedUserIDs: Set<User.ID> = []
+    var numberOfUsers: Int { userListOutput.numberOfUsers }
+    var type: UserListType? {
         didSet {
-            if type == .editable { view?.allowTableViewEditing() }
+            view?.allowEditing(type == .editable)
         }
     }
     
-    private let dataSource: UserListTableViewDataSource = UserListTableViewDataSource(items: [])
-    private var userListConfigurators: [[UserCellConfigurator]] {
-        get { dataSource.items as! [[UserCellConfigurator]] }
-        set { dataSource.items = newValue }
+    required init(view: UserListViewInput, output: UserListOutput) {
+        self.view = view
+        self.userListOutput = output
     }
-    
-    private(set) var userListModels: [UserListCellModel] {
-        get { userListConfigurators.first?.map { $0.model } ?? [] }
-        set { userListConfigurators = [newValue.map { UserCellConfigurator(model: $0) }] }
-    }
-    
-    required init(view: UserListViewInput) { self.view = view }
     
     // MARK: - UserListInput
-    func updateList(with cellModelArray: [UserListCellModel]) {
-        guard let view = view else { return }
-        userListConfigurators = [cellModelArray.map { UserCellConfigurator(model: $0) }]
-        view.reloadTableView()
-        view.hideActivityIndicator()
-        userListOutput?.didUpdateList(with: cellModelArray)
+    func refresh() {
+        view?.refresh()
     }
     
     // MARK: - UserListViewOutput
     func viewDidLoad() {
-        view?.setupTableView(with: dataSource)
-        view?.showActivityIndicator()
+        userListOutput.subscribeOnUserChanges(
+            DataSourceObserver<User>(
+                contentWillChange: { [weak self] in self?.view?.beginUpdate() },
+                contentDidChange: { [weak self] in self?.view?.endUpdate() },
+                didReceiveChange: { [weak self] change in
+                    switch change {
+                    case .update(_, let indexPath):
+                        self?.view?.updateRow(at: indexPath)
+                    case .insert(_, let indexPath):
+                        self?.view?.insertRow(at: indexPath)
+                    case .delete(let indexPath):
+                        self?.view?.removeRow(at: indexPath)
+                    case .move(let indexPath, let newIndexPath):
+                        self?.view?.moveRow(from: indexPath, to: newIndexPath)
+                    }
+                }
+            )
+        )
     }
     
-    func didSelectRow(at indexPath: IndexPath) {
-        guard let view = view else { return }
-        if userListConfigurators.isEmpty { return }
+    func getConfiguratorForCell(at indexPath: IndexPath) -> CellConfigurator {
+        let user = userListOutput.getUser(at: indexPath)
+        return UserCellConfigurator(model: user.makeCellModel(
+            selectedUserIDs.contains { $0 == user.id}
+        ))
+    }   
+    
+    func didSelectUser(at indexPath: IndexPath) {
         switch type {
         case .singlePick:
-            userListOutput?.didSelectUser(with: indexPath.row)
+            userListOutput.didSelectUser(at: indexPath.row)
         case .multiplePick:
-            userListModels[indexPath.row].isChoosen.toggle()
-            view.setSelected(userListModels[indexPath.row].isChoosen, cellAt: indexPath)
-            userListOutput?.didSelectUser(with: indexPath.row)
+            let user = userListOutput.getUser(at: indexPath)
+            let shouldSelect = !selectedUserIDs.contains { $0 == user.id }
+            if shouldSelect {
+                selectedUserIDs.insert(user.id)
+            } else {
+                selectedUserIDs.remove(user.id)
+            }
+            view?.setSelected(
+                shouldSelect,
+                cellAt: indexPath
+            )
+            userListOutput.didSelectUser(at: indexPath.row)
         case .editable:
             break
         case .none:
@@ -87,7 +110,23 @@ final class UserListPresenter: UserListViewOutput {
         }
     }
     
-    func didEditRow(at indexPath: IndexPath) {
-        userListOutput?.didRemoveUser(with: indexPath.row)
+    func didDeleteUser(at indexPath: IndexPath) {
+        let user = userListOutput.getUser(at: indexPath)
+        selectedUserIDs.remove(user.id)
+        userListOutput.didRemoveUser(at: indexPath.row)
+    }
+    
+    func cleanSelectedUsers() {
+        selectedUserIDs.removeAll()
+    }
+}
+
+fileprivate extension User {
+    func makeCellModel(_ choosen: Bool = false) -> UserListCellModel {
+        UserListCellModel(
+            displayName: displayName,
+            pictureName: pictureName,
+            isChoosen: choosen
+        )
     }
 }
