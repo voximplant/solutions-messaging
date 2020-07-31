@@ -6,7 +6,7 @@ target 'Messaging' do
   use_frameworks!
 
   # Pods for Messaging
-  pod 'VoxImplantSDK', '2.32.1'
+  pod 'VoxImplantSDK', '2.34.0'
 
 end
 
