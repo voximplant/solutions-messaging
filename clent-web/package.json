@@ -24,7 +24,7 @@
     "@vue/cli-plugin-typescript": "^3.11.0",
     "@vue/cli-service": "^4.2.2",
     "postcss-loader": "^3.0.0",
-    "pug": "^2.0.3",
+    "pug": "^3.0.1",
     "pug-plain-loader": "^1.0.0",
     "sass": "^1.17.4",
     "sass-loader": "^7.1.0",
