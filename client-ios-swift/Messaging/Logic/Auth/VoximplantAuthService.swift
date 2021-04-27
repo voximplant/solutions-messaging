@@ -57,9 +57,12 @@ final class VoximplantAuthService: NSObject, VIClientSessionDelegate, AuthServic
                 return
             }
             
-            self?.client.login(withUser: user, password: password,
-                success: { (displayUserName: String, tokens: VIAuthParams) in
-                    Tokens.update(with: tokens)
+            self?.client.login(
+                withUser: user, password: password,
+                success: { (displayUserName: String, tokens: VIAuthParams?) in
+                    if let tokens = tokens {
+                        Tokens.update(with: tokens)
+                    }
                     self?.loggedInUser = user
                     completion(nil)
                 },
@@ -99,9 +102,12 @@ final class VoximplantAuthService: NSObject, VIClientSessionDelegate, AuthServic
                     return
                     
                 case let .success(accessKey):
-                    self?.client.login(withUser: user, token: accessKey.token,
-                        success: { (displayUserName: String, tokens: VIAuthParams) in
-                            Tokens.update(with: tokens)
+                    self?.client.login(
+                        withUser: user, token: accessKey.token,
+                        success: { (displayUserName: String, tokens: VIAuthParams?) in
+                            if let tokens = tokens {
+                                Tokens.update(with: tokens)
+                            }
                             self?.loggedInUser = user
                             completion(nil)
                         },
