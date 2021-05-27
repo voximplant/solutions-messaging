@@ -48,7 +48,7 @@
 		7E8E1A1D249A7FEB00BC78F9 /* Conversation.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E8E1A1C249A7FEB00BC78F9 /* Conversation.storyboard */; };
 		7E8E1A1F249A811500BC78F9 /* Login.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E8E1A1E249A811500BC78F9 /* Login.storyboard */; };
 		7E8E1A21249A816100BC78F9 /* Create.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E8E1A20249A816100BC78F9 /* Create.storyboard */; };
-		7E8E1A25249A8B8900BC78F9 /* BuildFile in Frameworks */ = {isa = PBXBuildFile; productRef = 7E8E1A24249A8B8900BC78F9 /* SwiftPackageProductDependency */; };
+		7E8E1A25249A8B8900BC78F9 /* SelectableStackView in Frameworks */ = {isa = PBXBuildFile; productRef = 7E8E1A24249A8B8900BC78F9 /* SelectableStackView */; };
 		7E97C23C2499F2A5006DD538 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E97C23B2499F2A5006DD538 /* AuthError.swift */; };
 		7E97C23E2499F404006DD538 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E97C23D2499F404006DD538 /* AuthService.swift */; };
 		7E97C241249A00DC006DD538 /* VoximplantDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E97C240249A00DC006DD538 /* VoximplantDataSource.swift */; };
@@ -192,6 +192,7 @@
 		923A55AA237AB43900FC3C1D /* Button.swift in Sources */ = {isa = PBXBuildFile; fileRef = 923A55A9237AB43900FC3C1D /* Button.swift */; };
 		923A55B3237AB48000FC3C1D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 923A55B2237AB48000FC3C1D /* Assets.xcassets */; };
 		923A55B5237AB4FD00FC3C1D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 923A55B4237AB4FD00FC3C1D /* LaunchScreen.storyboard */; };
+		BBD6C02A265FD3100092B694 /* VoximplantSDK in Frameworks */ = {isa = PBXBuildFile; productRef = BBD6C029265FD3100092B694 /* VoximplantSDK */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -388,7 +389,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7E8E1A25249A8B8900BC78F9 /* BuildFile in Frameworks */,
+				7E8E1A25249A8B8900BC78F9 /* SelectableStackView in Frameworks */,
+				BBD6C02A265FD3100092B694 /* VoximplantSDK in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -659,7 +661,6 @@
 			children = (
 				922CE133237AAB7000740266 /* Messaging */,
 				922CE11D237AAAB000740266 /* Products */,
-				D56F6115EBC0429F5655F720 /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -989,13 +990,6 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
-		D56F6115EBC0429F5655F720 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Pods;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1013,7 +1007,8 @@
 			);
 			name = Messaging;
 			packageProductDependencies = (
-				7E8E1A24249A8B8900BC78F9 /* SwiftPackageProductDependency */,
+				7E8E1A24249A8B8900BC78F9 /* SelectableStackView */,
+				BBD6C029265FD3100092B694 /* VoximplantSDK */,
 			);
 			productName = Messaging;
 			productReference = 922CE11C237AAAB000740266 /* Messaging.app */;
@@ -1044,7 +1039,8 @@
 			);
 			mainGroup = 922CE113237AAAB000740266;
 			packageReferences = (
-				7E8E1A23249A8B8900BC78F9 /* RemoteSwiftPackageReference */,
+				7E8E1A23249A8B8900BC78F9 /* XCRemoteSwiftPackageReference "SelectableStackView" */,
+				BBD6C028265FD3100092B694 /* XCRemoteSwiftPackageReference "ios-sdk-releases" */,
 			);
 			productRefGroup = 922CE11D237AAAB000740266 /* Products */;
 			projectDirPath = "";
@@ -1453,7 +1449,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		7E8E1A23249A8B8900BC78F9 /* RemoteSwiftPackageReference */ = {
+		7E8E1A23249A8B8900BC78F9 /* XCRemoteSwiftPackageReference "SelectableStackView" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/VladimirBrejcha/SelectableStackView";
 			requirement = {
@@ -1461,13 +1457,26 @@
 				minimumVersion = 1.1.1;
 			};
 		};
+		BBD6C028265FD3100092B694 /* XCRemoteSwiftPackageReference "ios-sdk-releases" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/voximplant/ios-sdk-releases.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.39.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7E8E1A24249A8B8900BC78F9 /* SwiftPackageProductDependency */ = {
+		7E8E1A24249A8B8900BC78F9 /* SelectableStackView */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7E8E1A23249A8B8900BC78F9 /* RemoteSwiftPackageReference */;
+			package = 7E8E1A23249A8B8900BC78F9 /* XCRemoteSwiftPackageReference "SelectableStackView" */;
 			productName = SelectableStackView;
+		};
+		BBD6C029265FD3100092B694 /* VoximplantSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = BBD6C028265FD3100092B694 /* XCRemoteSwiftPackageReference "ios-sdk-releases" */;
+			productName = VoximplantSDK;
 		};
 /* End XCSwiftPackageProductDependency section */
 
