@@ -12,7 +12,7 @@ interface ConversationEventDao {
     fun getAll(conversationUUID: String): List<ConversationEvent>
 
     @Query("SELECT * FROM conversationevent WHERE conversation = :conversationUUID AND sequence = :sequence")
-    suspend fun get(conversationUUID: String, sequence: Long) : ConversationEvent?
+    suspend fun get(conversationUUID: String, sequence: Long): ConversationEvent?
 
     @Insert(onConflict = REPLACE)
     fun insertAll(event: List<ConversationEvent>)

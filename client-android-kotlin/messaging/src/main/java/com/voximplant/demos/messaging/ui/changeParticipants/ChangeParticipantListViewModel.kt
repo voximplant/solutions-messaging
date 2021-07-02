@@ -9,7 +9,7 @@ import com.voximplant.demos.messaging.utils.ifNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class ChangeParticipantListViewModel: BaseViewModel() {
+class ChangeParticipantListViewModel : BaseViewModel() {
     private val activeConversation = repository.activeConversation
     private val users = repository.users
 
@@ -136,7 +136,10 @@ class ChangeParticipantListViewModel: BaseViewModel() {
         }
     }
 
-    fun onSaveButtonPressed(type: ChangeParticipantListModuleType, savingHandler: (Boolean) -> Unit) {
+    fun onSaveButtonPressed(
+        type: ChangeParticipantListModuleType,
+        savingHandler: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             val conversation = activeConversation.value
                 .ifNull {

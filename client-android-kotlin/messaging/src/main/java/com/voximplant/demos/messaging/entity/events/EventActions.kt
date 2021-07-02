@@ -8,20 +8,20 @@ enum class ConversationEventAction {
     JOIN_CONVERSATION,
     LEAVE_CONVERSATION,
     CREATE_CONVERSATION,
-    REMOVE_CONVERSATION
+    REMOVE_CONVERSATION,
 }
 
 enum class MessageEventAction {
     SEND,
     EDIT,
-    REMOVE
+    REMOVE,
 }
 
 enum class ServiceEventAction {
     READ,
-    TYPING
+    TYPING,
 }
 
 enum class UserEventAction {
-    EDIT
+    EDIT,
 }

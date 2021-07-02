@@ -3,7 +3,7 @@ package com.voximplant.demos.messaging.ui.login
 import androidx.lifecycle.MutableLiveData
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.utils.BaseViewModel
-import com.voximplant.demos.messaging.utils.POSTFIX
+import com.voximplant.demos.messaging.utils.VOX_DOMAIN
 import com.voximplant.sdk.client.LoginError
 
 class LoginViewModel : BaseViewModel() {
@@ -13,7 +13,7 @@ class LoginViewModel : BaseViewModel() {
 
     fun login(user: String, password: String) {
         showProgress.postValue(R.string.progress_logging_in)
-        clientManager.login("$user$POSTFIX", password)
+        clientManager.login("$user$VOX_DOMAIN", password)
     }
 
     //region VoxClientManagerListener
@@ -30,14 +30,24 @@ class LoginViewModel : BaseViewModel() {
         hideProgress.postValue(Unit)
 
         when (error) {
-            LoginError.INVALID_USERNAME -> showInvalidInputError.postValue(Pair(true, R.string.error_invalid_username))
-            LoginError.INVALID_PASSWORD -> showInvalidInputError.postValue(Pair(false,R.string.error_invalid_password))
-            LoginError.ACCOUNT_FROZEN   -> postError(R.string.alert_login_failed_account_frozen)
-            LoginError.TIMEOUT          -> postError(R.string.alert_login_failed_timeout)
-            LoginError.NETWORK_ISSUES   -> postError(R.string.alert_login_failed_network_issues)
-            LoginError.TOKEN_EXPIRED    -> postError(R.string.alert_login_failed_token_expired)
-            LoginError.INTERNAL_ERROR   -> postError(R.string.alert_login_failed_internal_error)
-            else                        -> postError(R.string.alert_login_failed_internal_error)
+            LoginError.INVALID_USERNAME -> showInvalidInputError.postValue(
+                Pair(
+                    true,
+                    R.string.error_invalid_username
+                )
+            )
+            LoginError.INVALID_PASSWORD -> showInvalidInputError.postValue(
+                Pair(
+                    false,
+                    R.string.error_invalid_password
+                )
+            )
+            LoginError.ACCOUNT_FROZEN -> postError(R.string.alert_login_failed_account_frozen)
+            LoginError.TIMEOUT -> postError(R.string.alert_login_failed_timeout)
+            LoginError.NETWORK_ISSUES -> postError(R.string.alert_login_failed_network_issues)
+            LoginError.TOKEN_EXPIRED -> postError(R.string.alert_login_failed_token_expired)
+            LoginError.INTERNAL_ERROR -> postError(R.string.alert_login_failed_internal_error)
+            else -> postError(R.string.alert_login_failed_internal_error)
         }
     }
 

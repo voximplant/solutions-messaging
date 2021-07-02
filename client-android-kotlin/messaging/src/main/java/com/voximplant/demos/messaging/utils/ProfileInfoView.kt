@@ -74,7 +74,9 @@ class ProfileInfoView @JvmOverloads constructor(
         set(value) {
             savedTitleText = value
             profile_info_title_edit_text.setText(value)
-            if (imageName == null) { imageName = null } // to update profile picture
+            if (imageName == null) {
+                imageName = null
+            } // to update profile picture
         }
 
     private var titleHintText: String? = null
@@ -107,12 +109,12 @@ class ProfileInfoView @JvmOverloads constructor(
         set(value) {
             value?.let {
                 profile_image_view.setImageResource(resources.getImageId(this.context, "p${it}"))
-            } ?: {
+            } ?: run {
                 profile_image_view.setImageBitmap(
                     ProfilePictureGenerator
                         .createTextImage(titleText?.firstLetters()?.take(2) ?: "")
                 )
-            }()
+            }
             field = value
         }
 
@@ -173,7 +175,8 @@ class ProfileInfoView @JvmOverloads constructor(
 
         set_profile_image_button.setOnClickListener {
             hideKeyboard()
-            imagePickerView = ProfilePicturePickerView(this.context, choosenImage = imageName?.toInt() ?: 1)
+            imagePickerView =
+                ProfilePicturePickerView(this.context, choosenImage = imageName?.toInt() ?: 1)
             imagePickerView?.listener = this
             rootView?.addView(imagePickerView)
         }

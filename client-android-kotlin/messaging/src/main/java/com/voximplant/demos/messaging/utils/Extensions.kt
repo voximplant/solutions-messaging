@@ -1,5 +1,6 @@
 package com.voximplant.demos.messaging.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
@@ -17,14 +18,15 @@ fun Resources.getImageId(context: Context, imageName: String): Int {
     return this.getIdentifier(
         imageName,
         "drawable",
-        context.packageName
+        context.packageName,
     )
 }
 
-fun LongRange.contains(range: LongRange) : Boolean {
+fun LongRange.contains(range: LongRange): Boolean {
     return range.first >= this.first && range.last <= this.last && range.count() <= this.count()
 }
 
+@SuppressLint("UseCompatLoadingForDrawables")
 fun Context.getDrawableById(id: Int): Drawable? {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
         getDrawable(id)
@@ -34,13 +36,21 @@ fun Context.getDrawableById(id: Int): Drawable? {
     }
 }
 
-fun Context.getColorById(id: Int): Int? {
+fun Context.getColorById(id: Int): Int {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         getColor(id)
     } else {
         @Suppress("DEPRECATION")
         resources.getColor(id)
     }
+}
+
+inline fun <T> List<T>.safeIndexOfFirst(predicate: (T) -> Boolean): Int? {
+    for ((index, item) in this.withIndex()) {
+        if (predicate(item))
+            return index
+    }
+    return null
 }
 
 inline fun<T> T?.ifNull(nullHandler: () -> Nothing): T {
@@ -58,5 +68,5 @@ fun String.firstLetters(): String? {
         firstLetters += s[0]
     }
 
-    return firstLetters.toUpperCase()
+    return firstLetters.uppercase()
 }

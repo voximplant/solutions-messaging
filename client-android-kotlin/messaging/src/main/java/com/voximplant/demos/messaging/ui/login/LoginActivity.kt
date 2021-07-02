@@ -9,7 +9,6 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
 import android.view.View
 import android.widget.EditText
-import androidx.lifecycle.Observer
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.ui.conversations.ConversationsActivity
 import com.voximplant.demos.messaging.utils.BaseActivity
@@ -28,7 +27,8 @@ class LoginActivity : BaseActivity<LoginViewModel>(LoginViewModel::class.java) {
         }
 
         val reducer = AnimatorInflater.loadAnimator(this.applicationContext, R.animator.reduce_size)
-        val increaser = AnimatorInflater.loadAnimator(this.applicationContext, R.animator.regain_size)
+        val increaser =
+            AnimatorInflater.loadAnimator(this.applicationContext, R.animator.regain_size)
 
         loginButton.setOnTouchListener { view, motionEvent ->
             if (motionEvent.action == ACTION_DOWN) animate(view, reducer)
@@ -36,17 +36,16 @@ class LoginActivity : BaseActivity<LoginViewModel>(LoginViewModel::class.java) {
             false
         }
 
-        model.loginSuccessfulEvent.observe(this, Observer {
+        model.loginSuccessfulEvent.observe(this, {
             showConversationsScreen()
         })
 
-        model.showInvalidInputError.observe(this, Observer {
+        model.showInvalidInputError.observe(this, {
             showError(
                 when (it.first) {
                     true -> usernameView
                     false -> passwordView
-                }
-                , resources.getString(it.second)
+                }, resources.getString(it.second)
             )
         })
     }
@@ -57,7 +56,7 @@ class LoginActivity : BaseActivity<LoginViewModel>(LoginViewModel::class.java) {
         model.onResume()
     }
 
-    override fun showConnectionError(text: String?) { }
+    override fun showConnectionError(text: String?) {}
 
     private fun showConversationsScreen() {
         runOnUiThread {

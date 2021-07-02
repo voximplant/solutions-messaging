@@ -20,7 +20,7 @@ data class ConversationModel(
                 ConversationType.from(conversation.customData.type ?: ConversationType.CHAT.stringValue),
                 conversation.title,
                 conversation.customData.image,
-                conversation.lastUpdated
+                conversation.lastUpdated,
             )
         }
 
@@ -30,7 +30,7 @@ data class ConversationModel(
                 ConversationType.from(conversation.customData.type ?: ConversationType.CHAT.stringValue),
                 user.displayName,
                 user.customData.image,
-                conversation.lastUpdated
+                conversation.lastUpdated,
             )
         }
     }

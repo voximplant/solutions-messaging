@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">Messaging</string>
 
-    <string name="prompt_login">username</string>
+    <string name="voximplant_com">.voximplant.com</string>
+
+    <string name="prompt_login">username@app.account</string>
     <string name="prompt_password">password</string>
     <string name="action_sign_in">Login</string>
     <string name="log_out">Logout</string>
@@ -18,10 +20,23 @@
     <string name="progress_logging_in">Logging in…</string>
     <string name="progress_updating">Updating…</string>
     <string name="progress_connecting">Connecting…</string>
-    <string name="progress_creating">Creating..</string>
+    <string name="progress_loading">Loading…</string>
+    <string name="progress_creating">Creating…</string>
+    <string name="progress_sending">Sending…</string>
+    <string name="progress_editing">Editing…</string>
+    <string name="progress_removing">Removing…</string>
+    <string name="progress_search_user">Search for a user…</string>
     <string name="add_admins_empty_list_description">No admins to add</string>
     <string name="remove_participants_empty_list_description">No participants to remove</string>
     <string name="add_participants_empty_list_description">No participants to add</string>
     <string name="remove_admins_empty_list_description">No admins to remove</string>
+    <string name="search_user">Search user</string>
+    <string name="search">Search</string>
+    <string name="user_already_exists">User already exists</string>
+    <string name="user_not_found">User not found</string>
+    <string name="could_not_share_location">Couldn\'t share location</string>
+    <string name="could_not_remove_message">Couldn\'t remove message</string>
+    <string name="could_not_send_message">Couldn\'t send the message</string>
+    <string name="could_not_edit_message">Couldn\'t edit message</string>
 </resources>
 

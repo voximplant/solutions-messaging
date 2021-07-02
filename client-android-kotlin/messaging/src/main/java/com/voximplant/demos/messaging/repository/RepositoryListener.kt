@@ -8,6 +8,7 @@ interface RepositoryListener {
     fun onServiceEvent(event: ServiceEvent) {
         Log.e(APP_TAG, "onServiceEvent")
     }
+
     fun failedToConnectToBackend() {
         Log.e(APP_TAG, "failedToConnectToBackend")
     }

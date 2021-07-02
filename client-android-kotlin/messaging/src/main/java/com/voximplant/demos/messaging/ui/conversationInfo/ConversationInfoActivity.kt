@@ -7,7 +7,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.entity.ConversationType.DIRECT
@@ -22,8 +21,10 @@ import com.voximplant.demos.messaging.ui.userProfile.UserProfileActivity.Compani
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_conversation_info.*
 
-class ConversationInfoActivity : BaseActivity<ConversationInfoViewModel>(ConversationInfoViewModel::class.java), UserListListener {
-    private val adapter =  UserListAdapter(this)
+class ConversationInfoActivity :
+    BaseActivity<ConversationInfoViewModel>(ConversationInfoViewModel::class.java),
+    UserListListener {
+    private val adapter = UserListAdapter(this)
 
     private var menuButton: Menu? = null
 
@@ -39,7 +40,7 @@ class ConversationInfoActivity : BaseActivity<ConversationInfoViewModel>(Convers
 
         profileInfoView.isEditingAllowed = false
 
-        model.conversationType.observe(this, Observer {
+        model.conversationType.observe(this, {
             profileInfoView.type = it
             leave_conversation_button.isEnabled = it != DIRECT
             leave_conversation_button.isVisible = it != DIRECT
@@ -49,23 +50,23 @@ class ConversationInfoActivity : BaseActivity<ConversationInfoViewModel>(Convers
             conversation_info_recycler_view.isVisible = it != DIRECT
         })
 
-        model.conversationTitle.observe(this, Observer {
+        model.conversationTitle.observe(this, {
             profileInfoView.titleText = it
         })
 
-        model.conversationDescription.observe(this, Observer {
+        model.conversationDescription.observe(this, {
             profileInfoView.descriptionText = it ?: " "
         })
 
-        model.conversationImageName.observe(this, Observer {
+        model.conversationImageName.observe(this, {
             profileInfoView.imageName = it
         })
 
-        model.conversationParticipants.observe(this, Observer {
+        model.conversationParticipants.observe(this, {
             adapter.submitList(it)
         })
 
-        model.exitScreen.observe(this, Observer {
+        model.exitScreen.observe(this, {
             val intent = Intent(this, ConversationsActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
@@ -73,7 +74,7 @@ class ConversationInfoActivity : BaseActivity<ConversationInfoViewModel>(Convers
             finish()
         })
 
-        model.meIsAdmin.observe(this, Observer { admin ->
+        model.meIsAdmin.observe(this, { admin ->
             menuButton?.getItem(0)?.let {
                 model.conversationType.value?.let { type ->
                     if (type != DIRECT) {

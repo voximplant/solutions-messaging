@@ -14,5 +14,5 @@ data class Conversation(
     val isDirect: Boolean,
     var isPublic: Boolean,
     val isUber: Boolean,
-    var customData: CustomData
+    var customData: CustomData,
 )

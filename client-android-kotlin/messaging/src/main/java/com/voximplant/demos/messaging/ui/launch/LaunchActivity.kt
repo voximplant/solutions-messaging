@@ -15,10 +15,11 @@ class LaunchActivity : AppCompatActivity() {
         setContentView(R.layout.activity_launch)
 
         val intent =
-            if (Shared.clientManager.tokensExist)
-                { Intent(this, ConversationsActivity::class.java) }
-            else
-                { Intent(this, LoginActivity::class.java) }
+            if (Shared.clientManager.tokensExist) {
+                Intent(this, ConversationsActivity::class.java)
+            } else {
+                Intent(this, LoginActivity::class.java)
+            }
 
         startActivity(intent)
         finish()

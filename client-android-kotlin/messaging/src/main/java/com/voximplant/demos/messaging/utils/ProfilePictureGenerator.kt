@@ -3,7 +3,7 @@ package com.voximplant.demos.messaging.utils
 import android.graphics.*
 
 object ProfilePictureGenerator {
-    fun createTextImage(text: String) : Bitmap {
+    fun createTextImage(text: String): Bitmap {
         val bitmap = Bitmap.createBitmap(140, 140, Bitmap.Config.ARGB_8888)
 
         val canvas = Canvas(bitmap)
@@ -41,7 +41,7 @@ object ProfilePictureGenerator {
                     Color.parseColor("#F5B433"),
                     Color.parseColor("#579F2B"),
                     Color.parseColor("#1F036C"),
-                    Color.parseColor("#CE0755")
+                    Color.parseColor("#CE0755"),
                 )
             val randomInt = (colors.indices).random()
             return colors[randomInt]

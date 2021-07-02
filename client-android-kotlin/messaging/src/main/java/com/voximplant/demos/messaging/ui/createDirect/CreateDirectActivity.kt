@@ -2,22 +2,19 @@ package com.voximplant.demos.messaging.ui.createDirect
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
-import androidx.core.app.NavUtils
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
+import android.view.View
+import androidx.activity.viewModels
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.entity.ConversationType
-import com.voximplant.demos.messaging.entity.User
 import com.voximplant.demos.messaging.ui.activeConversation.ActiveConversationActivity
 import com.voximplant.demos.messaging.ui.createChat.CreateChatActivity
-import com.voximplant.demos.messaging.ui.userList.UserListAdapter
-import com.voximplant.demos.messaging.ui.userList.UserListListener
+import com.voximplant.demos.messaging.ui.userSearch.UserSearchViewModel
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_create_direct.*
 
-class CreateDirectActivity: BaseActivity<CreateDirectViewModel>(CreateDirectViewModel::class.java), UserListListener {
-    private val adapter = UserListAdapter(this)
+class CreateDirectActivity :
+    BaseActivity<CreateDirectViewModel>(CreateDirectViewModel::class.java) {
+    private val userSearchModel: UserSearchViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,14 +23,32 @@ class CreateDirectActivity: BaseActivity<CreateDirectViewModel>(CreateDirectView
 
         title = "Create Direct Chat"
 
-        user_list_recycler_view.layoutManager = LinearLayoutManager(this)
-        user_list_recycler_view.adapter = adapter
-
-        model.users.observe(this, Observer {
-            adapter.submitList(it)
+        model.users.observe(this, { users ->
+            userSearchModel.usersList.value = users
         })
 
-        model.showActiveConversation.observe(this, Observer {
+        userSearchModel.selectedItem.observe(this, { user ->
+            showProgressHUD(getString(R.string.progress_loading))
+            model.onSelect(user)
+        })
+
+        userSearchModel.showProgress.observe(this, { textID ->
+            showProgressHUD(resources.getString(textID))
+        })
+
+        userSearchModel.hideProgress.observe(this, {
+            hideProgressHUD()
+        })
+
+        userSearchModel.filterString.observe(this, {
+            if (it.isEmpty()) {
+                constraintLayout.visibility = View.VISIBLE
+            } else {
+                constraintLayout.visibility = View.GONE
+            }
+        })
+
+        model.showActiveConversation.observe(this, {
             val intent = Intent(this, ActiveConversationActivity::class.java)
             startActivity(intent)
             finish()
@@ -50,20 +65,5 @@ class CreateDirectActivity: BaseActivity<CreateDirectViewModel>(CreateDirectView
             intent.putExtra("Type", ConversationType.CHANNEL.stringValue)
             startActivity(intent)
         }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> {
-                NavUtils.navigateUpFromSameTask(this)
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    override fun onSelect(user: User) {
-        showProgressHUD("Creating...")
-        model.onSelect(user)
     }
 }

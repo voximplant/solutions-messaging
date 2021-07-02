@@ -4,6 +4,5 @@
         android:id="@+id/edit_conversation_menu_button"
         android:icon="@drawable/ic_edit_48px"
         android:title=""
-        app:iconTint="@color/text"
         app:showAsAction="always" />
 </menu>

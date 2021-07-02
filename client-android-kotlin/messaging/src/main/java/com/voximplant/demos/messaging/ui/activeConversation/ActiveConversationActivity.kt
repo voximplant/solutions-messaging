@@ -7,9 +7,13 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.gms.maps.model.LatLng
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.ui.conversationInfo.ConversationInfoActivity
 import com.voximplant.demos.messaging.ui.conversations.ConversationsActivity
+import com.voximplant.demos.messaging.ui.location.LocationActivity
+import com.voximplant.demos.messaging.ui.location.LocationActivity.Companion.LATITUDE
+import com.voximplant.demos.messaging.ui.location.LocationActivity.Companion.LONGITUDE
 import com.voximplant.demos.messaging.ui.userProfile.UserProfileActivity
 import com.voximplant.demos.messaging.utils.BaseActivity
 import com.voximplant.demos.messaging.utils.ifNull
@@ -55,40 +59,49 @@ class ActiveConversationActivity :
                 setMenuItemsVisibility(false)
                 showEditMode(false)
 
-                showProgressHUD("Editing..")
-                model.editMessage(editSequence, create_message_text_view.text.toString()) { edited ->
+                showProgressHUD(getString(R.string.progress_editing))
+                model.editMessage(
+                    editSequence,
+                    create_message_text_view.text.toString()
+                ) { edited ->
                     hideProgressHUD()
                     create_message_text_view.setText("")
-                    if (!edited) { showError("Could'nt edit message") }
+                    if (!edited) {
+                        showError(getString(R.string.could_not_edit_message))
+                    }
                 }
             } else {
                 adapter.selectedRowIndex = null
                 setMenuItemsVisibility(false)
 
-                showProgressHUD("Sending..")
+                showProgressHUD(getString(R.string.progress_sending))
 
                 model.sendButtonClick(create_message_text_view.text.toString()) { sent ->
                     hideProgressHUD()
                     create_message_text_view.setText("")
-                    if (!sent) { showError("Could'nt send the message") }
+                    if (!sent) {
+                        showError(getString(R.string.could_not_send_message))
+                    }
                 }
             }
         }
 
-        model.title.observe(this, Observer {
+        model.title.observe(this, {
             it?.let { title = it }
         })
 
-        model.imageName.observe(this, Observer {
+        model.imageName.observe(this, {
             it?.let { setMenuItemImage(it) }
         })
 
-        model.messages.observe(this, Observer {
+        model.messages.observe(this, {
             adapter.submitList(it)
         })
 
         model.myPermissions.observe(this, Observer { permissions ->
-            if (permissions == null) { return@Observer }
+            if (permissions == null) {
+                return@Observer
+            }
 
             if (permissions.canWrite) {
                 message_container_layout.minHeight = 52
@@ -109,6 +122,30 @@ class ActiveConversationActivity :
             selectedMessageSequence = null
             setMenuItemsVisibility(false)
             showEditMode(false)
+        }
+
+        share_location_image_button.setOnClickListener {
+            showLocationActivity(null)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        val lat = intent?.getDoubleExtra(LATITUDE, 0.0)
+            .takeIf { it != 0.0 }
+            .ifNull { return }
+        val lon = intent?.getDoubleExtra(LONGITUDE, 0.0)
+            .takeIf { it != 0.0 }
+            .ifNull { return }
+
+        showProgressHUD(getString(R.string.progress_sending))
+
+        model.sendLocation(LatLng(lat,lon)) {
+            hideProgressHUD()
+
+            create_message_text_view.setText("")
+            if (!it) { showError(getString(R.string.could_not_share_location)) }
         }
     }
 
@@ -178,17 +215,38 @@ class ActiveConversationActivity :
 
                 adapter.selectedRowIndex = null
                 setMenuItemsVisibility(false)
-                showProgressHUD("Removing")
+                showProgressHUD(getString(R.string.progress_removing))
 
                 model.removeMessage(removeSequence) { removed ->
                     hideProgressHUD()
                     if (!removed) {
-                        showError("Couldn't remove message")
+                        showError(getString(R.string.could_not_remove_message))
                     }
                 }
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onMessageSelected(sequence: Long, selected: Boolean, my: Boolean) {
+        if (selected) {
+            selectedMessageSequence = sequence
+            if (my) {
+                editMenuItem?.isVisible = model.myPermissions.value?.canEditMessages ?: false
+                removeMenuItem?.isVisible = model.myPermissions.value?.canRemoveMessages ?: false
+            } else {
+                editMenuItem?.isVisible = model.myPermissions.value?.canEditAllMessages ?: false
+                removeMenuItem?.isVisible = model.myPermissions.value?.canRemoveAllMessages ?: false
+            }
+        } else {
+            selectedMessageSequence = null
+            setMenuItemsVisibility(false)
+            showEditMode(false)
+        }
+    }
+
+    override fun onLocationSelected(location: LatLng) {
+        showLocationActivity(location)
     }
 
     private fun setMenuItemImage(imageName: String) {
@@ -207,20 +265,12 @@ class ActiveConversationActivity :
         isInEditingMode = show
     }
 
-    override fun onMessageSelected(sequence: Long, selected: Boolean, my: Boolean) {
-        if (selected) {
-            selectedMessageSequence = sequence
-            if (my) {
-                editMenuItem?.isVisible = model.myPermissions.value?.canEditMessages ?: false
-                removeMenuItem?.isVisible = model.myPermissions.value?.canRemoveMessages ?: false
-            } else {
-                editMenuItem?.isVisible = model.myPermissions.value?.canEditAllMessages ?: false
-                removeMenuItem?.isVisible = model.myPermissions.value?.canRemoveAllMessages ?: false
-            }
-        } else {
-            selectedMessageSequence = null
-            setMenuItemsVisibility(false)
-            showEditMode(false)
+    private fun showLocationActivity(location: LatLng?) {
+        val intent = Intent(this, LocationActivity::class.java)
+        location?.let {
+            intent.putExtra(LATITUDE, location.latitude)
+            intent.putExtra(LONGITUDE, location.longitude)
         }
+        startActivity(intent)
     }
 }

@@ -6,9 +6,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import com.voximplant.demos.messaging.ui.login.LoginActivity
 
 abstract class BaseActivity<T : BaseViewModel>(private val modelType: Class<T>) :
@@ -21,43 +19,43 @@ abstract class BaseActivity<T : BaseViewModel>(private val modelType: Class<T>) 
     private var errorHUDView: AlertDialog? = null
 
     protected val model: T
-        get() = ViewModelProvider(ViewModelStoreOwner { this.viewModelStore }).get(modelType)
+        get() = ViewModelProvider { this.viewModelStore }.get(modelType)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        model.showProgress.observe(this, Observer { textID ->
+        model.showProgress.observe(this, { textID ->
             showProgressHUD(resources.getString(textID))
         })
 
-        model.hideProgress.observe(this, Observer {
+        model.hideProgress.observe(this, {
             hideProgressHUD()
         })
 
-        model.stringError.observe(this, Observer { text ->
+        model.stringError.observe(this, { text ->
             showError(text)
         })
 
-        model.intError.observe(this, Observer { textID ->
+        model.intError.observe(this, { textID ->
             showError(resources.getString(textID))
         })
 
-        model.subtitle.observe(this, Observer {
+        model.subtitle.observe(this, {
             supportActionBar?.subtitle = it
         })
 
-        model.finish.observe(this, Observer {
+        model.finish.observe(this, {
             finish()
         })
 
-        model.showLogin.observe(this, Observer {
+        model.showLogin.observe(this, {
             val intent = Intent(applicationContext, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
             startActivity(intent)
         })
 
-        model.showConnectionError.observe(this, Observer {
+        model.showConnectionError.observe(this, {
             showConnectionError(it)
         })
 

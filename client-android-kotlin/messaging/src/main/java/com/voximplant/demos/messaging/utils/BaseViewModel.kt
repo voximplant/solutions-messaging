@@ -16,7 +16,7 @@ abstract class BaseViewModel : ViewModel(), VoxClientManagerListener, Repository
 
     val hideProgress = MutableLiveData<Unit>()
 
-    val subtitle = MutableLiveData<String>()
+    val subtitle = MutableLiveData<String?>()
 
     val finish = MutableLiveData<Unit>()
 
@@ -26,12 +26,23 @@ abstract class BaseViewModel : ViewModel(), VoxClientManagerListener, Repository
 
     val stringError = MutableLiveData<String>()
 
+    val intToast = MutableLiveData<Int>()
+
+    val stringToast = MutableLiveData<String>()
+
     val showConnectionError = MutableLiveData<String?>()
 
     protected fun <T : Comparable<T>> postError(error: T) {
         when (error) {
             is Int -> intError.postValue(error)
             is String -> stringError.postValue(error)
+        }
+    }
+
+    protected fun <T : Comparable<T>> postToast(text: T) {
+        when (text) {
+            is Int -> intToast.postValue(text)
+            is String -> stringToast.postValue(text)
         }
     }
 

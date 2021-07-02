@@ -5,19 +5,22 @@ import android.view.ViewGroup
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.maps.model.LatLng
 import com.voximplant.demos.messaging.R
-import com.voximplant.demos.messaging.ui.activeConversation.MessengerEventModel.EventCellModel
-import com.voximplant.demos.messaging.ui.activeConversation.MessengerEventModel.MessageCellModel
+import com.voximplant.demos.messaging.ui.activeConversation.MessengerEventModel.*
 import com.voximplant.demos.messaging.utils.getColorById
+import com.voximplant.demos.messaging.utils.ifNull
 import com.voximplant.demos.messaging.utils.inflate
 
 interface ActiveConversationAdapterListener {
     fun onMessageSelected(sequence: Long, selected: Boolean, my: Boolean)
+    fun onLocationSelected(location: LatLng)
 }
 
 class ActiveConversationAdapter(private val listener: ActiveConversationAdapterListener) :
     PagedListAdapter<MessengerEventModel, RecyclerView.ViewHolder>(DIFF_CALLBACK),
     ActiveConversationViewHolderListener {
+
 
     private var previouslySelectedView: View? = null
     var selectedRowIndex: Int? = null
@@ -27,9 +30,13 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
         position: Int
     ) {
         if (position == selectedRowIndex) {
-            holder.itemView.setBackgroundColor(holder.itemView.context.getColorById(R.color.container) ?: return)
+            holder.itemView.setBackgroundColor(
+                holder.itemView.context.getColorById(R.color.container) ?: return
+            )
         } else {
-            holder.itemView.setBackgroundColor(holder.itemView.context.getColorById(R.color.colorBackground) ?: return)
+            holder.itemView.setBackgroundColor(
+                holder.itemView.context.getColorById(R.color.colorBackground) ?: return
+            )
         }
         val messengerEventModel = getItem(position)
         when (holder) {
@@ -39,6 +46,10 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
                 holder.bind(messengerEventModel as? MessageCellModel ?: return)
             is ActiveConversationEventViewHolder ->
                 holder.bind(messengerEventModel as? EventCellModel ?: return)
+            is ActiveConversationMyLocationViewHolder ->
+                holder.bind(messengerEventModel as? LocationCellModel ?: return)
+            is ActiveConversationLocationViewHolder ->
+                holder.bind(messengerEventModel as? LocationCellModel ?: return)
         }
     }
 
@@ -48,7 +59,8 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
     ): RecyclerView.ViewHolder {
         return when (viewType) {
             MY_MESSAGE -> {
-                val view = parent.inflate(R.layout.active_conversation_my_message_adapter_row, false)
+                val view =
+                    parent.inflate(R.layout.active_conversation_my_message_adapter_row, false)
                 ActiveConversationMyMessageViewHolder(view, this)
             }
             MESSAGE -> {
@@ -58,6 +70,14 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
             EVENT -> {
                 val view = parent.inflate(R.layout.active_conversation_event_adapter_row, false)
                 ActiveConversationEventViewHolder(view)
+            }
+            MY_LOCATION -> {
+                val view = parent.inflate(R.layout.active_conversation_my_location_adapter_row, false)
+                ActiveConversationMyLocationViewHolder(view, this)
+            }
+            LOCATION -> {
+                val view = parent.inflate(R.layout.active_conversation_location_adapter_row, false)
+                ActiveConversationLocationViewHolder(view, this)
             }
             else -> throw IllegalArgumentException("$viewType viewType is Unknown")
         }
@@ -74,6 +94,12 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
                     MESSAGE
                 }
             is EventCellModel -> EVENT
+            is LocationCellModel ->
+                if (item.isMy) {
+                    MY_LOCATION
+                } else {
+                    LOCATION
+                }
             else -> super.getItemViewType(position)
         }
     }
@@ -81,7 +107,11 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
     override fun onViewLongTap(view: View, viewPosition: Int) {
 
         if (previouslySelectedView != null) {
-            previouslySelectedView?.setBackgroundColor(previouslySelectedView?.context?.getColorById(R.color.colorBackground) ?: return)
+            previouslySelectedView?.setBackgroundColor(
+                previouslySelectedView?.context?.getColorById(
+                    R.color.colorBackground
+                ) ?: return
+            )
         }
 
         if (view.isSelected) {
@@ -94,13 +124,18 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
         } else {
             previouslySelectedView?.updateSelection(false)
             view.updateSelection(true)
-            view.setBackgroundColor(view.context.getColorById(R.color.container) ?: return)
+            view.setBackgroundColor(view.context.getColorById(R.color.container))
             (getItem(viewPosition) as? MessageCellModel)?.let { cellModel ->
                 listener.onMessageSelected(cellModel.sequence, true, cellModel.isMy)
             }
             selectedRowIndex = viewPosition
             previouslySelectedView = view
         }
+    }
+
+    override fun onViewTap(view: View, viewPosition: Int) {
+        val locationItem = (getItem(viewPosition) as? LocationCellModel).ifNull { return }
+        listener.onLocationSelected(locationItem.location)
     }
 
     fun updateSelectedRowSelection(selected: Boolean) {
@@ -151,5 +186,7 @@ class ActiveConversationAdapter(private val listener: ActiveConversationAdapterL
         private const val MY_MESSAGE = 0
         private const val MESSAGE = 1
         private const val EVENT = 2
+        private const val MY_LOCATION = 3
+        private const val LOCATION = 4
     }
 }

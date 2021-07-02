@@ -12,12 +12,7 @@ import com.voximplant.demos.messaging.utils.BaseViewModel
 import kotlinx.coroutines.launch
 
 class CreateChatViewModel : BaseViewModel() {
-    val users = Transformations.map(repository.users) { users ->
-        val usersCopy = users.toMutableList()
-
-        usersCopy.removeAll { it.imId == repository.me }
-        usersCopy
-    }
+    val users = Transformations.map(repository.users) { it }
 
     private val chosenUsers: MutableList<User> = mutableListOf()
 
@@ -29,7 +24,7 @@ class CreateChatViewModel : BaseViewModel() {
         description: String?,
         pictureName: String?,
         isPublic: Boolean,
-        isUber: Boolean
+        isUber: Boolean,
     ) {
         viewModelScope.launch {
             showProgress.postValue(R.string.progress_creating)
@@ -42,7 +37,14 @@ class CreateChatViewModel : BaseViewModel() {
 
             when (type) {
                 CHAT ->
-                    if (repository.createGroupConversation(title, chosenUsers, description, pictureName, isPublic, isUber)
+                    if (repository.createGroupConversation(
+                            title,
+                            chosenUsers,
+                            description,
+                            pictureName,
+                            isPublic,
+                            isUber
+                        )
                     ) {
                         hideProgress.postValue(Unit)
                         showActiveConversation.postValue(Unit)
@@ -75,4 +77,4 @@ class CreateChatViewModel : BaseViewModel() {
             chosenUsers.add(user)
         }
     }
- }
+}

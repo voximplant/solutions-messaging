@@ -4,23 +4,20 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.EditText
+import androidx.activity.viewModels
 import androidx.core.app.NavUtils
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.voximplant.demos.messaging.R
 import com.voximplant.demos.messaging.entity.ConversationType
 import com.voximplant.demos.messaging.entity.ConversationType.CHANNEL
 import com.voximplant.demos.messaging.entity.ConversationType.CHAT
-import com.voximplant.demos.messaging.entity.User
 import com.voximplant.demos.messaging.ui.activeConversation.ActiveConversationActivity
-import com.voximplant.demos.messaging.ui.userList.UserListAdapter
-import com.voximplant.demos.messaging.ui.userList.UserListListener
+import com.voximplant.demos.messaging.ui.userSearch.UserSearchViewModel
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_create_chat.*
 import kotlinx.android.synthetic.main.profile_info_view.*
 
-class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel::class.java), UserListListener {
-    private val adapter = UserListAdapter(this)
+class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel::class.java) {
+    private val userSearchModel: UserSearchViewModel by viewModels()
 
     private val type: ConversationType
         get() = ConversationType.from(intent.getStringExtra("Type") ?: CHAT.stringValue)
@@ -45,12 +42,22 @@ class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel
             profileInfoView.type = CHANNEL
         }
 
-        create_chat_recycler_view.layoutManager = LinearLayoutManager(this)
-        adapter.multipleSelectionEnabled = true
-        create_chat_recycler_view.adapter = adapter
+        userSearchModel.useMultipleSelection.value = true
 
-        model.users.observe(this, Observer {
-            adapter.submitList(it)
+        model.users.observe(this, { users ->
+            userSearchModel.usersList.value = users
+        })
+
+        userSearchModel.selectedItem.observe(this, { user ->
+            model.onSelectUser(user)
+        })
+
+        userSearchModel.showProgress.observe(this, { textID ->
+            showProgressHUD(resources.getString(textID))
+        })
+
+        userSearchModel.hideProgress.observe(this, {
+            hideProgressHUD()
         })
 
         create_chat_create_fob.setOnClickListener {
@@ -72,18 +79,16 @@ class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel
                 false
             }
 
-            showProgressHUD("Creating...")
-
             model.createConversation(
                 type, profile_info_title_edit_text.text.toString(),
                 profile_info_description_edit_text.text.toString(),
                 profileInfoView.imageName,
                 isPublic,
-                isUber
+                isUber,
             )
         }
 
-        model.showActiveConversation.observe(this, Observer {
+        model.showActiveConversation.observe(this, {
             val intent = Intent(this, ActiveConversationActivity::class.java)
             startActivity(intent)
             finish()
@@ -98,10 +103,6 @@ class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onSelect(user: User) {
-        model.onSelectUser(user)
     }
 
     private fun showError(textView: EditText, text: String) {

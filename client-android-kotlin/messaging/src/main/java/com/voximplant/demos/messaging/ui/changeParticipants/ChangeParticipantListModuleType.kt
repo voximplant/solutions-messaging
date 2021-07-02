@@ -7,7 +7,7 @@ enum class ChangeParticipantListModuleType {
     RemoveAdmins;
 
     companion object {
-        fun buildWithIntValue(intValue: Int) : ChangeParticipantListModuleType {
+        fun buildWithIntValue(intValue: Int): ChangeParticipantListModuleType {
             return when (intValue) {
                 ADD_PARTICIPANTS -> AddParticipants
                 REMOVE_PARTICIPANTS -> RemoveParticipants

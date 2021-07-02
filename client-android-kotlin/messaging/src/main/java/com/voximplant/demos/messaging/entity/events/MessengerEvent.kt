@@ -9,7 +9,7 @@ sealed class MessengerEvent {
     abstract val initiatorImId: Long
     abstract val sequence: Long
 
-    @Entity(primaryKeys = ["sequence", "conversation" ])
+    @Entity(primaryKeys = ["sequence", "conversation"])
     data class ConversationEvent(
         override val initiatorImId: Long,
         val action: ConversationEventAction,
@@ -18,7 +18,7 @@ sealed class MessengerEvent {
         val timestamp: Long
     ) : MessengerEvent()
 
-    @Entity(primaryKeys = ["sequence", "conversation" ])
+    @Entity(primaryKeys = ["sequence", "conversation"])
     data class MessageEvent(
         override val initiatorImId: Long,
         var action: MessageEventAction,

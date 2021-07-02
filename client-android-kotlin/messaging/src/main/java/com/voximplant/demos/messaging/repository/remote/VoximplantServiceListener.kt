@@ -11,12 +11,18 @@ interface VoximplantServiceListener {
     fun onConversationEvent(voxEvent: IConversationEvent) {
         Log.e(APP_TAG, "onIConversationEvent")
     }
+
     fun onMessageEvent(voxEvent: IMessageEvent) {
         Log.e(APP_TAG, "onIMessageEvent")
     }
+
     fun onServiceEvent(voxEvent: IConversationServiceEvent) {
-        Log.e(APP_TAG, "on ${voxEvent.messengerAction}, seq: ${voxEvent.sequence}, user: ${voxEvent.imUserId}")
+        Log.e(
+            APP_TAG,
+            "on ${voxEvent.messengerAction}, seq: ${voxEvent.sequence}, user: ${voxEvent.imUserId}"
+        )
     }
+
     fun onUserEvent(voxEvent: IUserEvent) {
         Log.e(APP_TAG, "onIUserEvent")
     }

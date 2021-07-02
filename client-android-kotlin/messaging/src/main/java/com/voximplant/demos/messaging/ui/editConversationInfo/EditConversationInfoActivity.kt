@@ -41,7 +41,7 @@ class EditConversationInfoActivity :
         editProfileInfoView.isUberVisible = false
         editProfileInfoView.listener = this
 
-        model.conversationType.observe(this, Observer {
+        model.conversationType.observe(this, {
             editProfileInfoView.type = it
             leave_conversation_button.isEnabled = it != DIRECT
             leave_conversation_button.isVisible = it != DIRECT
@@ -49,23 +49,23 @@ class EditConversationInfoActivity :
             permissions_button.isVisible = it == CHAT
         })
 
-        model.conversationTitle.observe(this, Observer {
+        model.conversationTitle.observe(this, {
             editProfileInfoView.titleText = it
         })
 
-        model.conversationDescription.observe(this, Observer {
+        model.conversationDescription.observe(this, {
             editProfileInfoView.descriptionText = it
         })
 
-        model.conversationImageName.observe(this, Observer {
+        model.conversationImageName.observe(this, {
             editProfileInfoView.imageName = it
         })
 
-        model.conversationIsPublic.observe(this, Observer {
+        model.conversationIsPublic.observe(this, {
             editProfileInfoView.isPublic = it ?: false
         })
 
-        model.exitScreen.observe(this, Observer {
+        model.exitScreen.observe(this, {
             val intent = Intent(this, ConversationsActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
@@ -110,7 +110,12 @@ class EditConversationInfoActivity :
         if (item.itemId == R.id.save_menu_button) {
 
             editProfileInfoView.titleText?.let { title ->
-                model.onSaveButtonClicked(title, editProfileInfoView.descriptionText, editProfileInfoView.imageName, editProfileInfoView.isPublic)
+                model.onSaveButtonClicked(
+                    title,
+                    editProfileInfoView.descriptionText,
+                    editProfileInfoView.imageName,
+                    editProfileInfoView.isPublic
+                )
                 showProgressHUD("Updating...")
             }
                 ?: showError(profile_info_title_edit_text, "Title cannot be empty")

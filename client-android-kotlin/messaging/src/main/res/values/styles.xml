@@ -2,6 +2,7 @@
 
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
         <item name="colorPrimaryDark">@color/statusBar</item>
+        <item name="colorPrimary">@color/colorButton</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialogTheme</item>
         <item name="colorSecondary">@color/containerLight</item>
         <item name="colorAccent">@color/colorAccent</item>

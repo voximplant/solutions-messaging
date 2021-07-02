@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.app.NavUtils
-import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +16,9 @@ import com.voximplant.demos.messaging.ui.userProfile.UserProfileActivity.Compani
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_conversations.*
 
-class ConversationsActivity : BaseActivity<ConversationsViewModel>(ConversationsViewModel::class.java), ConversationViewHolderListener {
+class ConversationsActivity :
+    BaseActivity<ConversationsViewModel>(ConversationsViewModel::class.java),
+    ConversationViewHolderListener {
     private val adapter = ConversationAdapter(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,22 +26,27 @@ class ConversationsActivity : BaseActivity<ConversationsViewModel>(Conversations
 
         setContentView(R.layout.activity_conversations)
 
-        adapter.registerAdapterDataObserver(object: RecyclerView.AdapterDataObserver() {
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
             override fun onChanged() {
                 conversationsRecyclerView.scrollToPosition(0)
             }
+
             override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
                 conversationsRecyclerView.scrollToPosition(0)
             }
+
             override fun onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) {
                 conversationsRecyclerView.scrollToPosition(0)
             }
+
             override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
                 conversationsRecyclerView.scrollToPosition(0)
             }
+
             override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
                 conversationsRecyclerView.scrollToPosition(0)
             }
+
             override fun onItemRangeChanged(positionStart: Int, itemCount: Int, payload: Any?) {
                 conversationsRecyclerView.scrollToPosition(0)
             }
@@ -56,7 +62,7 @@ class ConversationsActivity : BaseActivity<ConversationsViewModel>(Conversations
         conversationsRecyclerView.layoutManager = layoutManager
         conversationsRecyclerView.adapter = adapter
 
-        model.conversationModels.observe(this, Observer {
+        model.conversationModels.observe(this, {
             info_text_view.text = if (it.isEmpty()) {
                 "Conversation list is being updated..."
             } else {

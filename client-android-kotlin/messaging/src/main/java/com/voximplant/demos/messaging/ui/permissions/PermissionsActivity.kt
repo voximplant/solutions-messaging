@@ -44,7 +44,7 @@ class PermissionsActivity: BaseActivity<PermissionsViewModel>(PermissionsViewMod
 
         setContentView(R.layout.activity_permissions)
 
-        model.conversationPermissions.observe(this, Observer { permissions ->
+        model.conversationPermissions.observe(this, { permissions ->
             canWrite = permissions.canWrite
             canEdit = permissions.canEditMessages
             canEditAll = permissions.canEditAllMessages

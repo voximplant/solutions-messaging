@@ -9,5 +9,5 @@ data class User(
     @PrimaryKey val imId: Long,
     var name: String,
     var displayName: String,
-    var customData: CustomData
+    var customData: CustomData,
 )

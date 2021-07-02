@@ -3,13 +3,11 @@
     <item
         android:id="@+id/edit_message_menu_button"
         android:icon="@drawable/ic_edit_48px"
-        app:iconTint="@color/text"
         android:title=""
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/remove_message_menu_button"
         android:icon="@drawable/ic_delete_48px"
-        app:iconTint="@color/text"
         android:title=""
         app:showAsAction="ifRoom" />
     <item

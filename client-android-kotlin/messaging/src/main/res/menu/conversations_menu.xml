@@ -4,6 +4,5 @@
         android:id="@+id/conversations_menu"
         android:icon="@drawable/ic_settings_48px"
         android:title=""
-        app:iconTint="@color/text"
         app:showAsAction="always" />
 </menu>

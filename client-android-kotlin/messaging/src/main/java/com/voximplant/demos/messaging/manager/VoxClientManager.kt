@@ -3,6 +3,8 @@ package com.voximplant.demos.messaging.manager
 import android.content.Context
 import android.util.Log
 import com.voximplant.demos.messaging.utils.*
+import com.voximplant.demos.messaging.utils.Shared.accName
+import com.voximplant.demos.messaging.utils.Shared.appName
 import com.voximplant.demos.messaging.utils.preferences.getLongFromPrefs
 import com.voximplant.demos.messaging.utils.preferences.getStringFromPrefs
 import com.voximplant.demos.messaging.utils.preferences.removeKeyFromPrefs
@@ -18,7 +20,8 @@ private const val LOGIN_REFRESH_EXPIRE = "refreshExpire"
 private const val MILLISECONDS_IN_SECOND = 1000
 private const val USERNAME = "username"
 
-class VoxClientManager (private val client: IClient, private val context: Context) : IClientSessionListener, IClientLoginListener {
+class VoxClientManager(private val client: IClient, private val context: Context) :
+    IClientSessionListener, IClientLoginListener {
 
     private val listeners: MutableList<VoxClientManagerListener> = mutableListOf()
 
@@ -52,8 +55,9 @@ class VoxClientManager (private val client: IClient, private val context: Contex
                     Log.e(APP_TAG, "exception on connect $e")
                 }
 
-            ClientState.CONNECTED ->
+            ClientState.CONNECTED -> {
                 client.login(username, password)
+            }
 
             else -> return
         }
@@ -77,10 +81,16 @@ class VoxClientManager (private val client: IClient, private val context: Contex
                     username = USERNAME.getStringFromPrefs(context)
 
                     if (tokenValid(LOGIN_ACCESS_EXPIRE.getLongFromPrefs(context))) {
-                        client.loginWithAccessToken(username, LOGIN_ACCESS_TOKEN.getStringFromPrefs(context))
+                        client.loginWithAccessToken(
+                            username,
+                            LOGIN_ACCESS_TOKEN.getStringFromPrefs(context)
+                        )
 
                     } else if (tokenValid(LOGIN_REFRESH_EXPIRE.getLongFromPrefs(context))) {
-                        client.refreshToken(username, LOGIN_REFRESH_TOKEN.getStringFromPrefs(context))
+                        client.refreshToken(
+                            username,
+                            LOGIN_REFRESH_TOKEN.getStringFromPrefs(context)
+                        )
                     }
                 }
 
@@ -159,6 +169,8 @@ class VoxClientManager (private val client: IClient, private val context: Contex
     override fun onLoginSuccessful(displayName: String?, authParams: AuthParams?) {
         this.displayName = displayName
         username?.saveToPrefs(context, key = USERNAME)
+        appName = username?.substringAfter("@")?.substringBefore(".")
+        accName = username?.substringAfter("@")?.substringAfter(".")?.substringBefore(".")
 
         listeners.forEach { it.onLoginSuccess(displayName ?: return) }
         saveAuthDetailsToSharedPreferences(authParams ?: return)
@@ -168,7 +180,7 @@ class VoxClientManager (private val client: IClient, private val context: Contex
         listeners.forEach { it.onLoginFailed(error ?: return) }
     }
 
-    override fun onOneTimeKeyGenerated(p0: String?) { }
+    override fun onOneTimeKeyGenerated(p0: String?) {}
 
     override fun onRefreshTokenSuccess(authParams: AuthParams?) {
         saveAuthDetailsToSharedPreferences(authParams ?: return)

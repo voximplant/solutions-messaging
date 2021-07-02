@@ -4,34 +4,49 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.viewModels
 import androidx.core.view.isVisible
-import androidx.lifecycle.Observer
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.voximplant.demos.messaging.R
-import com.voximplant.demos.messaging.entity.User
 import com.voximplant.demos.messaging.ui.changeParticipants.ChangeParticipantListModuleType.*
 import com.voximplant.demos.messaging.ui.conversations.ConversationsActivity
-import com.voximplant.demos.messaging.ui.userList.UserListAdapter
-import com.voximplant.demos.messaging.ui.userList.UserListListener
+import com.voximplant.demos.messaging.ui.userSearch.UserSearchViewModel
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_change_members.*
+import kotlinx.android.synthetic.main.activity_create_direct.*
 
-class ChangeParticipantListActivity : BaseActivity<ChangeParticipantListViewModel>(ChangeParticipantListViewModel::class.java), UserListListener {
-    private val adapter = UserListAdapter(this)
+class ChangeParticipantListActivity :
+    BaseActivity<ChangeParticipantListViewModel>(ChangeParticipantListViewModel::class.java) {
+    private val userSearchModel: UserSearchViewModel by viewModels()
 
     private var menuButton: Menu? = null
 
     private val type: ChangeParticipantListModuleType
-        get() = ChangeParticipantListModuleType.buildWithIntValue(intent.getIntExtra(CHANGE_PARTICIPANT_LIST_MODULE_TYPE, ADD_PARTICIPANTS))
+        get() = ChangeParticipantListModuleType.buildWithIntValue(
+            intent.getIntExtra(
+                CHANGE_PARTICIPANT_LIST_MODULE_TYPE,
+                ADD_PARTICIPANTS
+            )
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_change_members)
 
-        change_members_recycler_view.layoutManager = LinearLayoutManager(this)
-        adapter.multipleSelectionEnabled = true
-        change_members_recycler_view.adapter = adapter
+        userSearchModel.useMultipleSelection.value = true
+        userSearchModel.useGlobalSearch.value = false
+
+        userSearchModel.selectedItem.observe(this, { user ->
+            model.onSelectUser(user)
+        })
+
+        userSearchModel.showProgress.observe(this, { textID ->
+            showProgressHUD(resources.getString(textID))
+        })
+
+        userSearchModel.hideProgress.observe(this, {
+            hideProgressHUD()
+        })
 
         add_members_button.setOnClickListener {
             when (type) {
@@ -54,55 +69,63 @@ class ChangeParticipantListActivity : BaseActivity<ChangeParticipantListViewMode
             AddParticipants -> {
                 add_members_button.isVisible = false
                 title = "Add participants"
-                model.possibleToAddParticipants.observe(this, Observer { users ->
+                userSearchModel.useGlobalSearch.value = true
+                model.possibleToAddParticipants.observe(this, { users ->
+                    userSearchModel.usersList.value = users
                     if (users.isEmpty()) {
-                        empty_list_text_view.text = getString(R.string.add_participants_empty_list_description)
+                        empty_list_text_view.text =
+                            getString(R.string.add_participants_empty_list_description)
                     } else {
-                        adapter.submitList(users)
+                        empty_list_text_view.text = ""
                     }
                 })
             }
-
             RemoveParticipants -> {
                 title = "Remove participants"
-                model.possibleToRemoveParticipants.observe(this, Observer { users ->
+                model.possibleToRemoveParticipants.observe(this, { users ->
+                    userSearchModel.usersList.value = users
                     if (users.isEmpty()) {
-                        empty_list_text_view.text = getString(R.string.remove_participants_empty_list_description)
+                        empty_list_text_view.text =
+                            getString(R.string.remove_participants_empty_list_description)
                     } else {
-                        adapter.submitList(users)
+                        empty_list_text_view.text = ""
                     }
                 })
             }
             AddAdmins -> {
                 add_members_button.isVisible = false
                 title = "Add administrators"
-                model.possibleToAddAdmins.observe(this, Observer { admins ->
+                model.possibleToAddAdmins.observe(this, { admins ->
+                    userSearchModel.usersList.value = admins
                     if (admins.isEmpty()) {
-                        empty_list_text_view.text = getString(R.string.add_admins_empty_list_description)
+                        empty_list_text_view.text =
+                            getString(R.string.add_admins_empty_list_description)
                     } else {
-                        adapter.submitList(admins)
+                        empty_list_text_view.text = ""
                     }
                 })
             }
             RemoveAdmins -> {
                 title = "Remove administrators"
-                model.possibleToRemoveAdmins.observe(this, Observer { admins ->
+                model.possibleToRemoveAdmins.observe(this, { admins ->
+                    userSearchModel.usersList.value = admins
                     if (admins.isEmpty()) {
-                        empty_list_text_view.text = getString(R.string.remove_admins_empty_list_description)
+                        empty_list_text_view.text =
+                            getString(R.string.remove_admins_empty_list_description)
                     } else {
-                        adapter.submitList(admins)
+                        empty_list_text_view.text = ""
                     }
                 })
             }
         }
 
-        model.chosenUsers.observe(this, Observer {
+        model.chosenUsers.observe(this, {
             it?.let { users ->
-                menuButton?.getItem(0)?.setVisible(users.size > 0)
+                menuButton?.getItem(0)?.isVisible = users.size > 0
             }
         })
 
-        model.exitScreen.observe(this, Observer {
+        model.exitScreen.observe(this, {
             val intent = Intent(this, ConversationsActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
@@ -146,10 +169,5 @@ class ChangeParticipantListActivity : BaseActivity<ChangeParticipantListViewMode
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-
-    override fun onSelect(user: User) {
-        model.onSelectUser(user)
     }
 }

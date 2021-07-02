@@ -7,6 +7,7 @@ import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagedList
 import androidx.paging.toLiveData
+import com.google.android.gms.maps.model.LatLng
 import com.voximplant.demos.messaging.entity.Conversation
 import com.voximplant.demos.messaging.entity.ConversationType
 import com.voximplant.demos.messaging.entity.events.MessengerEvent
@@ -16,6 +17,9 @@ import com.voximplant.demos.messaging.repository.utils.image
 import com.voximplant.demos.messaging.repository.utils.type
 import com.voximplant.demos.messaging.utils.BaseViewModel
 import com.voximplant.demos.messaging.utils.ifNull
+import com.voximplant.demos.messaging.utils.payload.Payload
+import com.voximplant.demos.messaging.utils.payload.locationLatitude
+import com.voximplant.demos.messaging.utils.payload.locationLongitude
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -128,7 +132,23 @@ class ActiveConversationViewModel : BaseViewModel(), RepositoryDataStateNotifier
                     return@launch
                 }
 
-            sendingHandler(repository.sendMessage(messageText, conversation))
+            sendingHandler(repository.sendMessage(messageText, null, conversation))
+        }
+    }
+
+    fun sendLocation(location: LatLng, completionHandler: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val conversation = activeConversation.value
+                .ifNull {
+                    completionHandler(false)
+                    return@launch
+                }
+
+            val payload: Payload = mutableListOf()
+            payload.locationLatitude = location.latitude
+            payload.locationLongitude = location.longitude
+
+            completionHandler(repository.sendMessage("", payload, conversation))
         }
     }
 

@@ -53,25 +53,25 @@ class ConversationsViewModel : BaseViewModel() {
                         return@liveData
                     }
                     .forEach { conversation ->
-                    if (conversation.isDirect) {
-                        val neededUserImId = conversation.participants
-                            .firstOrNull { it != repository.me }
-                            .ifNull {
-                                emit(emptyList())
-                                return@liveData
-                            }
+                        if (conversation.isDirect) {
+                            val neededUserImId = conversation.participants
+                                .firstOrNull { it != repository.me }
+                                .ifNull {
+                                    emit(emptyList())
+                                    return@liveData
+                                }
 
-                        val user = users
-                            .firstOrNull { it.imId == neededUserImId }
-                            .ifNull {
-                                emit(emptyList())
-                                return@liveData
-                            }
-                        modelList.add(ConversationModel.buildDirect(conversation, user))
-                    } else {
-                        modelList.add(ConversationModel.buildGroup(conversation))
+                            val user = users
+                                .firstOrNull { it.imId == neededUserImId }
+                                .ifNull {
+                                    emit(emptyList())
+                                    return@liveData
+                                }
+                            modelList.add(ConversationModel.buildDirect(conversation, user))
+                        } else {
+                            modelList.add(ConversationModel.buildGroup(conversation))
+                        }
                     }
-                }
 
                 emit(
                     modelList

@@ -51,7 +51,6 @@
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:visibility="invisible"
-        android:tint="@color/text"
         app:layout_constraintBottom_toBottomOf="@+id/user_list_user_picture_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/user_list_user_picture_container"

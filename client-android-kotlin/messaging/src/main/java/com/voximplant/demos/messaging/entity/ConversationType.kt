@@ -11,7 +11,7 @@ enum class ConversationType(val stringValue: String) {
         get() = defaultPermissions(this)
 
     companion object {
-        fun from(search: String)
-                = requireNotNull(values().find { it.stringValue == search }) { "No TaskAction with value $search" }
+        fun from(search: String) =
+            requireNotNull(values().find { it.stringValue == search }) { "No TaskAction with value $search" }
     }
 }

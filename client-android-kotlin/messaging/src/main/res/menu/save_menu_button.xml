@@ -4,6 +4,5 @@
         android:id="@+id/save_menu_button"
         android:icon="@drawable/ic_done_48px"
         android:title=""
-        app:iconTint="@color/text"
         app:showAsAction="always" />
 </menu>

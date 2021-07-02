@@ -1,19 +1,13 @@
 package com.voximplant.demos.messaging.ui.createDirect
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.voximplant.demos.messaging.entity.User
 import com.voximplant.demos.messaging.utils.BaseViewModel
 import kotlinx.coroutines.launch
 
-class CreateDirectViewModel: BaseViewModel() {
-    val users = Transformations.map(repository.users) { users ->
-        val usersCopy = users.toMutableList()
+class CreateDirectViewModel : BaseViewModel() {
 
-        usersCopy.removeAll { it.imId == repository.me }
-        usersCopy
-    }
+    val users = Transformations.map(repository.users) { it }
 
     val showActiveConversation = MutableLiveData<Unit>()
 

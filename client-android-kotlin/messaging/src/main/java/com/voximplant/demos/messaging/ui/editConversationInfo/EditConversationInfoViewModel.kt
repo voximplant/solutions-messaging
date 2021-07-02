@@ -74,7 +74,14 @@ class EditConversationInfoViewModel : BaseViewModel() {
                             && activeConversation.customData.image == imageName
                             && activeConversation.isPublic == public)
                 ) {
-                    if (repository.updateConversation(activeConversation, title, description, imageName, public)) {
+                    if (repository.updateConversation(
+                            activeConversation,
+                            title,
+                            description,
+                            imageName,
+                            public,
+                        )
+                    ) {
                         hideProgress.postValue(Unit)
                         finish.postValue(Unit)
                     } else {

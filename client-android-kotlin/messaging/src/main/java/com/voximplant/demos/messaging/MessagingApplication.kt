@@ -1,6 +1,7 @@
 package com.voximplant.demos.messaging
 
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 import com.voximplant.demos.messaging.manager.VoxClientManager
 import com.voximplant.demos.messaging.repository.Repository
 import com.voximplant.demos.messaging.utils.Shared
@@ -13,13 +14,14 @@ class MessagingApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        val clientConfig = {
-            val config = ClientConfig()
-            config.packageName = packageName
-            config
-        }()
+        val config = ClientConfig()
+        config.packageName = packageName
 
-        val client = Voximplant.getClientInstance(Executors.newSingleThreadExecutor(), applicationContext, clientConfig)
+        val client = Voximplant.getClientInstance(
+            Executors.newSingleThreadExecutor(),
+            applicationContext,
+            config,
+        )
         val clientManager = VoxClientManager(client, applicationContext)
         val repository = Repository(applicationContext)
 
@@ -27,5 +29,7 @@ class MessagingApplication : Application() {
 
         Shared.clientManager = clientManager
         Shared.repository = repository
+
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
     }
 }

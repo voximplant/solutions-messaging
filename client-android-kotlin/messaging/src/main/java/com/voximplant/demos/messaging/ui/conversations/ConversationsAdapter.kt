@@ -29,8 +29,10 @@ class ConversationAdapter(private val onClickListener: ConversationViewHolderLis
                 oldItem.uuid == newItem.uuid
 
 
-            override fun areContentsTheSame(oldItem: ConversationModel, newItem: ConversationModel) =
-                oldItem.title == newItem.title && oldItem.pictureName == newItem.pictureName
+            override fun areContentsTheSame(
+                oldItem: ConversationModel,
+                newItem: ConversationModel,
+            ) = oldItem.title == newItem.title && oldItem.pictureName == newItem.pictureName
         }
     }
 }

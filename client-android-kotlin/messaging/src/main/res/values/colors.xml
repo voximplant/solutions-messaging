@@ -10,13 +10,15 @@
     <color name="colorGray">#9e9e9e</color>
     <color name="colorBlur">#4D000000</color>
 
+    <color name="colorBackground50">#80FFFFFF</color>
     <color name="statusBar">#392B5B</color>
     <color name="colorFull">#FFFFFF</color>
     <color name="colorBackground">#FCFCFC</color>
     <color name="containerLight">#F2F2F7</color>
     <color name="container">#CCCCCC</color>
     <color name="text">#121212</color>
-    <color name="textSecond">#B3FFFFFF</color>
+    <color name="textSecond">#828282</color>
+    <color name="textSecondAlwaysLight">#828282</color>
     <color name="textThird">#66000000</color>
 </resources>
 

@@ -14,13 +14,11 @@ import com.voximplant.demos.messaging.manager.VoxClientManagerListener
 import com.voximplant.demos.messaging.repository.Repository.RefreshState.READY
 import com.voximplant.demos.messaging.repository.Repository.RefreshState.REFRESHING
 import com.voximplant.demos.messaging.repository.local.AppDatabase
-import com.voximplant.demos.messaging.repository.remote.VoxAPIService
 import com.voximplant.demos.messaging.repository.remote.VoximplantService
 import com.voximplant.demos.messaging.repository.remote.VoximplantServiceListener
 import com.voximplant.demos.messaging.repository.utils.*
-import com.voximplant.demos.messaging.utils.APP_TAG
-import com.voximplant.demos.messaging.utils.contains
-import com.voximplant.demos.messaging.utils.ifNull
+import com.voximplant.demos.messaging.utils.*
+import com.voximplant.demos.messaging.utils.payload.Payload
 import com.voximplant.demos.messaging.utils.permissions.Permissions
 import com.voximplant.demos.messaging.utils.permissions.defaultAdminPermissions
 import com.voximplant.demos.messaging.utils.permissions.defaultPermissions
@@ -39,7 +37,8 @@ interface RepositoryDataStateNotifier {
     fun dataUpdated()
 }
 
-class Repository(private val context: Context) : VoximplantServiceListener, VoxClientManagerListener, CoroutineScope {
+class Repository(private val context: Context) : VoximplantServiceListener,
+    VoxClientManagerListener, CoroutineScope {
 
     override val coroutineContext: CoroutineContext
         get() = Dispatchers.IO + job
@@ -50,7 +49,6 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         .databaseBuilder(context, AppDatabase::class.java, "messaging-database")
         .build()
     private val remote = VoximplantService(Voximplant.getMessenger())
-    private val apiService = VoxAPIService()
     private val builder = ModelBuilder()
 
     private var dataStateNotifier: RepositoryDataStateNotifier? = null
@@ -68,6 +66,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         }
 
     private enum class RefreshState { READY, REFRESHING }
+
     private var needsRefresh: Boolean = false
     private var refreshState: RefreshState = READY
 
@@ -127,17 +126,6 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
             }
             refreshState = REFRESHING
 
-            val usernames = apiService.getVoxUsernames()
-                .takeIf { it.isNotEmpty() }
-                .ifNull {
-                    refreshState = READY
-                    listener?.failedToConnectToBackend()
-                    return@withContext
-                }
-
-            val voxUsers = requestVoxUsers(usernames)
-                .ifNull { return@withContext }
-
             if (needsRefresh) {
                 refreshState = READY
                 needsRefresh = false
@@ -146,18 +134,13 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
             }
 
             local.userDao().deleteAll()
-            local.userDao().insertAllUsers(voxUsers.map { builder.buildUser(it) })
-
             val username = remote.myUsername
                 .ifNull { return@withContext }
 
-            val me = voxUsers.first {
-                it.name == username
-            }
+            val me = requestUser(username)
+            me?.imId?.saveToPrefs(context, MY_IMID)
 
-            me.imId.saveToPrefs(context, MY_IMID)
-
-            val list = me.conversationList ?: return@withContext
+            val list = me?.conversationList ?: return@withContext
 
             if (list.size == 0) {
                 local.conversationDao().deleteAll()
@@ -174,79 +157,83 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
                 return@withContext
             }
 
-            val actualConversations = voxConversations.map { builder.buildConversation(it) }
-            local.conversationDao().deleteAll()
-            local.conversationDao().insertAllConversations(actualConversations)
+            val participantsImIDs: MutableList<Long> = mutableListOf()
 
             voxConversations.forEach { voxConversation ->
                 local.participantDao().deleteAllWithUUID(voxConversation.uuid)
                 local.participantDao().insertAll(voxConversation.participants.map {
+                    if (!participantsImIDs.contains(it.imUserId) && me.imId != it.imUserId)
+                        participantsImIDs.add(it.imUserId)
                     builder.buildParticipant(it, voxConversation.uuid)
                 })
             }
+
+            requestVoxUsersByIDs(participantsImIDs)
+
+            val actualConversations = voxConversations.map { builder.buildConversation(it) }
+
+            local.conversationDao().deleteAll()
+            local.conversationDao().insertAllConversations(actualConversations)
 
             refreshState = READY
             needsRefresh = false
         }
     }
 
-    private suspend fun requestVoxUsers(
-        usernames: List<String>
-    ) = suspendCoroutine<List<IUser>?> { continuation ->
-        remote.requestUsersWithUsernames(usernames) { result ->
-            result.onFailure {
-                continuation.resume(null)
-                return@requestUsersWithUsernames
+    private suspend fun requestVoxUsersByIDs(imIDs: List<Long>) =
+        suspendCoroutine<Unit> { continuation ->
+            remote.requestUsers(imIDs) { result ->
+                result.onSuccess {
+                    it.forEach { user ->
+                        local.userDao().insertUser(builder.buildUser(user))
+                    }
+                }
+                continuation.resume(Unit)
             }
-            result.onSuccess { continuation.resume(it) }
-        }
-    }
-
-    private suspend fun requestVoxConversations(
-        uuids: List<String>
-    ) = suspendCoroutine<List<IConversation>?> { continuation ->
-        val requestChunk = 30 // maximum conversations per request on Voximplant SDK is 30
-
-        val numberOfIterations = if (uuids.size % requestChunk > 0) {
-            uuids.size / requestChunk + 1
-        } else {
-            uuids.size / requestChunk
         }
 
-        var iterationsLeft = numberOfIterations
+    private suspend fun requestVoxConversations(uuids: List<String>) =
+        suspendCoroutine<List<IConversation>?> { continuation ->
+            val requestChunk = 30 // maximum conversations per request on Voximplant SDK is 30
 
-        val allVoxConversations: MutableList<IConversation> = mutableListOf()
-
-        for (iteration in 0 until numberOfIterations) {
-
-            val min = iteration * requestChunk
-            var max = (uuids.size - 1) - (uuids.size - ((iteration + 1) * requestChunk))
-
-            while (max >= uuids.size) {
-                max -= 1
+            val numberOfIterations = if (uuids.size % requestChunk > 0) {
+                uuids.size / requestChunk + 1
+            } else {
+                uuids.size / requestChunk
             }
 
-            val croppedList = uuids.subList(min, max + 1)
+            var iterationsLeft = numberOfIterations
 
-            remote.requestMultipleConversations(croppedList) { result ->
-                iterationsLeft--
+            val allVoxConversations: MutableList<IConversation> = mutableListOf()
 
-                result.onSuccess { voxConversations ->
-                    allVoxConversations.addAll(voxConversations)
+            for (iteration in 0 until numberOfIterations) {
+
+                val min = iteration * requestChunk
+                var max = (uuids.size - 1) - (uuids.size - ((iteration + 1) * requestChunk))
+
+                while (max >= uuids.size) {
+                    max -= 1
                 }
 
-                if (iterationsLeft == 0) {
-                    continuation.resume(allVoxConversations)
+                val croppedList = uuids.subList(min, max + 1)
+
+                remote.requestMultipleConversations(croppedList) { result ->
+                    iterationsLeft--
+
+                    result.onSuccess { voxConversations ->
+                        allVoxConversations.addAll(voxConversations)
+                    }
+
+                    if (iterationsLeft == 0) {
+                        continuation.resume(allVoxConversations)
+                    }
                 }
             }
         }
-    }
     //endregion
 
     //region Create Conversation
-    suspend fun createDirectConversation(
-        user: User
-    ) = withContext(coroutineContext) {
+    suspend fun createDirectConversation(user: User) = withContext(coroutineContext) {
         val voxParticipants = listOf(builder.buildDefaultVoxParticipant(user.imId, DIRECT))
 
         val customData: CustomData = mutableMapOf()
@@ -270,7 +257,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         description: String?,
         pictureName: String?,
         isPublic: Boolean,
-        isUber: Boolean
+        isUber: Boolean,
     ) = withContext(coroutineContext) {
         val builder = ConversationConfig.createBuilder()
             .setTitle(title)
@@ -287,7 +274,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         title: String,
         users: List<User>,
         description: String?,
-        pictureName: String?
+        pictureName: String?,
     ) = withContext(coroutineContext) {
         val builder = ConversationConfig.createBuilder()
             .setTitle(title)
@@ -300,145 +287,144 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         createConversation(builder.build())
     }
 
-    private suspend fun createConversation(
-        config: ConversationConfig
-    ) = suspendCoroutine<Boolean> { continuation ->
-        remote.createConversation(config) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxConversationEvent ->
-                local.conversationEventDao()
-                    .insert(builder.buildConversationEvent(voxConversationEvent))
-                local.conversationDao()
-                    .insert(builder.buildConversation(voxConversationEvent.conversation))
-                local.participantDao()
-                    .deleteAllWithUUID(voxConversationEvent.conversation.uuid)
-                local.participantDao()
-                    .insertAll(voxConversationEvent.conversation.participants
-                        .map { builder.buildParticipant(it, voxConversationEvent.conversation.uuid) })
-                continuation.resume(true)
+    private suspend fun createConversation(config: ConversationConfig) =
+        suspendCoroutine<Boolean> { continuation ->
+            remote.createConversation(config) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxConversationEvent ->
+                    local.conversationEventDao()
+                        .insert(builder.buildConversationEvent(voxConversationEvent))
+                    local.conversationDao()
+                        .insert(builder.buildConversation(voxConversationEvent.conversation))
+                    local.participantDao()
+                        .deleteAllWithUUID(voxConversationEvent.conversation.uuid)
+                    local.participantDao()
+                        .insertAll(voxConversationEvent.conversation.participants
+                            .map {
+                                builder.buildParticipant(
+                                    it,
+                                    voxConversationEvent.conversation.uuid
+                                )
+                            })
+                    activeConversation.postValue(builder.buildConversation(voxConversationEvent.conversation))
+                    continuation.resume(true)
+                }
             }
         }
-    }
     //endregion
 
     //region Participants
-    suspend fun requestParticipant(
-        conversationUUID: String,
-        imId: Long
-    ) = withContext(coroutineContext) {
-        local.participantDao().getByImId(imId, conversationUUID)
-    }
+    suspend fun requestParticipant(conversationUUID: String, imId: Long) =
+        withContext(coroutineContext) {
+            local.participantDao().getByImId(imId, conversationUUID)
+        }
 
-    suspend fun requestParticipants(
-        conversationUUID: String,
-        imIDs: List<Long>
-    ) = withContext(coroutineContext) {
-        local.participantDao().getAllByImId(imIDs, conversationUUID)
-    }
+    suspend fun requestParticipants(conversationUUID: String, imIDs: List<Long>) =
+        withContext(coroutineContext) {
+            local.participantDao().getAllByImId(imIDs, conversationUUID)
+        }
 
-    suspend fun requestParticipants(
-        conversationUUID: String
-    ) = withContext(coroutineContext) {
+    suspend fun requestParticipants(conversationUUID: String) = withContext(coroutineContext) {
         local.participantDao().getAllByConversation(conversationUUID)
     }
     //endregion
 
     //region Edit Participants
-    suspend fun addUsersToConversation(
-        users: List<User>,
-        conversation: Conversation
-    ) = suspendCoroutine<Boolean> { continuation ->
-        val voxConversation = recreateConversation(conversation)
-            .ifNull {
-                continuation.resume(false)
-                return@suspendCoroutine
-            }
-
-        val conversationType = ConversationType.from(
-            conversation.customData.type ?: CHAT.stringValue
-        )
-
-        val voxParticipants = users
-            .map { builder.buildDefaultVoxParticipant(it.imId, conversationType) }
-
-        remote.addParticipants(voxParticipants, voxConversation) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxConversationEvent ->
-                local.conversationEventDao()
-                    .insert(builder.buildConversationEvent(voxConversationEvent))
-                local.conversationDao()
-                    .insert(builder.buildConversation(voxConversationEvent.conversation))
-                local.participantDao()
-                    .insertAll(voxParticipants
-                        .map {builder.buildParticipant(it, voxConversationEvent.conversation.uuid) })
-
-                if (activeConversation.value?.uuid == voxConversationEvent.conversation.uuid) {
-                    activeConversation.postValue(
-                        local.conversationDao().loadByUUID(
-                            voxConversationEvent.conversation.uuid
-                        )
-                    )
+    suspend fun addUsersToConversation(users: List<User>, conversation: Conversation) =
+        suspendCoroutine<Boolean> { continuation ->
+            val voxConversation = recreateConversation(conversation)
+                .ifNull {
+                    continuation.resume(false)
+                    return@suspendCoroutine
                 }
 
-                continuation.resume(true)
+            val conversationType = ConversationType.from(
+                conversation.customData.type ?: CHAT.stringValue
+            )
+
+            val voxParticipants = users
+                .map { builder.buildDefaultVoxParticipant(it.imId, conversationType) }
+
+            remote.addParticipants(voxParticipants, voxConversation) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxConversationEvent ->
+                    local.conversationEventDao()
+                        .insert(builder.buildConversationEvent(voxConversationEvent))
+                    local.conversationDao()
+                        .insert(builder.buildConversation(voxConversationEvent.conversation))
+                    local.participantDao()
+                        .insertAll(voxParticipants
+                            .map {
+                                builder.buildParticipant(
+                                    it,
+                                    voxConversationEvent.conversation.uuid
+                                )
+                            })
+
+                    if (activeConversation.value?.uuid == voxConversationEvent.conversation.uuid) {
+                        activeConversation.postValue(
+                            local.conversationDao().loadByUUID(
+                                voxConversationEvent.conversation.uuid
+                            )
+                        )
+                    }
+
+                    continuation.resume(true)
+                }
             }
         }
-    }
 
-    suspend fun removeUsersFromConversation(
-        users: List<User>, conversation: Conversation
-    ) = withContext(coroutineContext) {
-        async {
-            val participants = requestParticipants(conversation.uuid, users.map { it.imId })
+    suspend fun removeUsersFromConversation(users: List<User>, conversation: Conversation) =
+        withContext(coroutineContext) {
+            async {
+                val participants = requestParticipants(conversation.uuid, users.map { it.imId })
 
-            if (participants.size != users.size) {
-                return@async false
-            }
+                if (participants.size != users.size) {
+                    return@async false
+                }
 
-            return@async removeParticipants(participants, conversation)
-        }.await()
-    }
+                return@async removeParticipants(participants, conversation)
+            }.await()
+        }
 
-    suspend fun addAdmins(
-        users: List<User>, conversation: Conversation
-    ) = withContext(coroutineContext) {
-        async {
-            val participants = requestParticipants(conversation.uuid, users.map { it.imId })
-            if (participants.size != users.size) {
-                return@async false
-            }
+    suspend fun addAdmins(users: List<User>, conversation: Conversation) =
+        withContext(coroutineContext) {
+            async {
+                val participants = requestParticipants(conversation.uuid, users.map { it.imId })
+                if (participants.size != users.size) {
+                    return@async false
+                }
 
-            participants.forEach { participant ->
-                participant.isOwner = true
-                participant.permissions = defaultAdminPermissions()
-            }
+                participants.forEach { participant ->
+                    participant.isOwner = true
+                    participant.permissions = defaultAdminPermissions()
+                }
 
-            return@async editParticipants(participants, conversation)
-        }.await()
-    }
+                return@async editParticipants(participants, conversation)
+            }.await()
+        }
 
-    suspend fun removeAdmins(
-        users: List<User>, conversation: Conversation
-    ) = withContext(coroutineContext) {
-        async {
-            val participants = requestParticipants(conversation.uuid, users.map { it.imId })
-            if (participants.size != users.size) {
-                return@async false
-            }
+    suspend fun removeAdmins(users: List<User>, conversation: Conversation) =
+        withContext(coroutineContext) {
+            async {
+                val participants = requestParticipants(conversation.uuid, users.map { it.imId })
+                if (participants.size != users.size) {
+                    return@async false
+                }
 
-            participants.forEach { participant ->
-                participant.isOwner = false
-                participant.permissions =
-                    conversation.customData.permissions ?: return@async false
-            }
+                participants.forEach { participant ->
+                    participant.isOwner = false
+                    participant.permissions =
+                        conversation.customData.permissions ?: return@async false
+                }
 
-            return@async editParticipants(participants, conversation)
-        }.await()
-    }
+                return@async editParticipants(participants, conversation)
+            }.await()
+        }
 
     private suspend fun removeParticipants(
         participants: List<Participant>,
-        conversation: Conversation
+        conversation: Conversation,
     ) = suspendCoroutine<Boolean> { continuation ->
         val voxConversation = recreateConversation(conversation)
             .ifNull {
@@ -457,7 +443,10 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
                 local.conversationDao()
                     .insert(builder.buildConversation(voxConversationEvent.conversation))
                 local.participantDao()
-                    .deleteAllWithImIds(voxParticipants.map { it.imUserId }, voxConversation.uuid)
+                    .deleteAllWithImIds(
+                        voxParticipants.map { it.imUserId },
+                        voxConversation.uuid
+                    )
 
                 if (activeConversation.value?.uuid == voxConversationEvent.conversation.uuid) {
                     activeConversation.postValue(
@@ -474,7 +463,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
 
     private suspend fun editParticipants(
         participants: List<Participant>,
-        conversation: Conversation
+        conversation: Conversation,
     ) = suspendCoroutine<Boolean> { continuation ->
         val voxConversation = recreateConversation(conversation)
             .ifNull {
@@ -514,7 +503,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         title: String,
         description: String?,
         pictureName: String?,
-        isPublic: Boolean
+        isPublic: Boolean,
     ) = withContext(coroutineContext) {
 
         val voxConversation = recreateConversation(conversation)
@@ -528,52 +517,46 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         updateConversation(voxConversation)
     }
 
-    suspend fun updateConversation(
-        conversation: Conversation,
-        permissions: Permissions
-    ) = withContext(coroutineContext) {
+    suspend fun updateConversation(conversation: Conversation, permissions: Permissions) =
+        withContext(coroutineContext) {
+            if (conversation.customData.permissions == permissions) {
+                return@withContext false
+            }
 
-        if (conversation.customData.permissions == permissions) {
-            return@withContext false
+            val voxConversation = recreateConversation(conversation)
+                .ifNull { return@withContext false }
+
+            voxConversation.customData.permissions = permissions
+
+            updateConversation(voxConversation)
         }
 
-        val voxConversation = recreateConversation(conversation)
-            .ifNull { return@withContext false }
+    private suspend fun updateConversation(voxConversation: IConversation) =
+        suspendCoroutine<Boolean> { continuation ->
+            remote.updateConversation(voxConversation) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxConversationEvent ->
+                    local.conversationEventDao()
+                        .insert(builder.buildConversationEvent(voxConversationEvent))
+                    local.conversationDao()
+                        .insert(builder.buildConversation(voxConversationEvent.conversation))
 
-        voxConversation.customData.permissions = permissions
-
-        updateConversation(voxConversation)
-    }
-
-    private suspend fun updateConversation(
-        voxConversation: IConversation
-    ) = suspendCoroutine<Boolean> { continuation ->
-        remote.updateConversation(voxConversation) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxConversationEvent ->
-                local.conversationEventDao()
-                    .insert(builder.buildConversationEvent(voxConversationEvent))
-                local.conversationDao()
-                    .insert(builder.buildConversation(voxConversationEvent.conversation))
-
-                if (activeConversation.value?.uuid == voxConversationEvent.conversation.uuid) {
-                    activeConversation.postValue(
-                        local.conversationDao().loadByUUID(
-                            voxConversationEvent.conversation.uuid
+                    if (activeConversation.value?.uuid == voxConversationEvent.conversation.uuid) {
+                        activeConversation.postValue(
+                            local.conversationDao().loadByUUID(
+                                voxConversationEvent.conversation.uuid
+                            )
                         )
-                    )
-                }
+                    }
 
-                continuation.resume(true)
+                    continuation.resume(true)
+                }
             }
         }
-    }
     //endregion
 
     //region Leave Conversation
-    suspend fun leaveConversation(
-        uuid: String
-    ) = suspendCoroutine<Boolean> { continuation ->
+    suspend fun leaveConversation(uuid: String) = suspendCoroutine<Boolean> { continuation ->
         remote.leaveConversation(uuid) { result ->
             result.onFailure { continuation.resume(false) }
             result.onSuccess { voxConversationEvent ->
@@ -590,15 +573,23 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
     //endregion
 
     //region Request User
-    suspend fun requestUser(
-        imId: Long
-    ) = withContext(coroutineContext) {
+    suspend fun requestUser(imId: Long) = withContext(coroutineContext) {
         local.userDao().loadUserByImId(imId)
     }
 
-    suspend fun requestUsers(
-        imIDs: List<Long>
-    ) = withContext(coroutineContext) {
+    suspend fun requestUser(username: String) = suspendCoroutine<IUser?> { continuation ->
+        remote.requestUser(username) { result ->
+            result.onFailure {
+                continuation.resume(null)
+            }
+            result.onSuccess {
+                local.userDao().insertUser(builder.buildUser(it))
+                continuation.resume(it)
+            }
+        }
+    }
+
+    suspend fun requestUsers(imIDs: List<Long>) = withContext(coroutineContext) {
 
         if (imIDs.isEmpty()) {
             return@withContext listOf<User>()
@@ -609,96 +600,88 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
     //endregion
 
     //region Edit User
-    suspend fun editUser(
-        status: String?, imageName: String?
-    ) = suspendCoroutine<Boolean> { continuation ->
+    suspend fun editUser(status: String?, imageName: String?) =
+        suspendCoroutine<Boolean> { continuation ->
+            val customData: CustomData = mutableMapOf()
+            customData.image = imageName
+            customData.status = status
 
-        val customData: CustomData = mutableMapOf()
-        customData.image = imageName
-        customData.status = status
-
-        remote.editUser(customData) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess {
-                local.userDao().insertUser(builder.buildUser(it.user))
-                continuation.resume(true)
+            remote.editUser(customData) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess {
+                    local.userDao().insertUser(builder.buildUser(it.user))
+                    continuation.resume(true)
+                }
             }
         }
-    }
     //endregion
 
     //region Message
-    suspend fun sendMessage(
-        text: String,
-        conversation: Conversation
-    ) = suspendCoroutine<Boolean> { continuation ->
-
-        val voxConversation = recreateConversation(conversation)
-            .ifNull {
-                continuation.resume(false)
-                return@suspendCoroutine
-            }
-
-        remote.sendMessage(text, voxConversation) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxMessageEvent ->
-
-                local.conversationDao().updateLastUpdated(
-                    voxMessageEvent.timestamp,
-                    voxMessageEvent.sequence,
-                    voxMessageEvent.message.conversation
-                )
-
-                local.participantDao().updateLastRead(
-                    voxMessageEvent.sequence,
-                    voxMessageEvent.imUserId,
-                    voxMessageEvent.message.conversation
-                )
-
-                local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
-
-                if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
-                    activeConversation
-                        .postValue(
-                            local.conversationDao().loadByUUID(voxMessageEvent.message.conversation)
-                        )
-                    dataStateNotifier?.dataUpdated()
+    suspend fun sendMessage(text: String, payload: Payload?, conversation: Conversation) =
+        suspendCoroutine<Boolean> { continuation ->
+            val voxConversation = recreateConversation(conversation)
+                .ifNull {
+                    continuation.resume(false)
+                    return@suspendCoroutine
                 }
 
-                needsRefresh = true
+            remote.sendMessage(text, payload, voxConversation) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxMessageEvent ->
 
-                continuation.resume(true)
+                    local.conversationDao().updateLastUpdated(
+                        voxMessageEvent.timestamp,
+                        voxMessageEvent.sequence,
+                        voxMessageEvent.message.conversation,
+                    )
+
+                    local.participantDao().updateLastRead(
+                        voxMessageEvent.sequence,
+                        voxMessageEvent.imUserId,
+                        voxMessageEvent.message.conversation,
+                    )
+
+                    local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
+
+                    if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
+                        activeConversation
+                            .postValue(
+                                local.conversationDao()
+                                    .loadByUUID(voxMessageEvent.message.conversation)
+                            )
+                        dataStateNotifier?.dataUpdated()
+                    }
+
+                    needsRefresh = true
+
+                    continuation.resume(true)
+                }
             }
         }
-    }
 
-    suspend fun findMessage(
-        sequence: Long,
-        conversationUUID: String
-    ) = withContext(coroutineContext) {
-        val message = (requestMessengerEvent(conversationUUID, sequence) as? MessageEvent)?.message
-            .ifNull { return@withContext null }
+    suspend fun findMessage(sequence: Long, conversationUUID: String) =
+        withContext(coroutineContext) {
+            val message =
+                (requestMessengerEvent(conversationUUID, sequence) as? MessageEvent)?.message
+                    .ifNull { return@withContext null }
 
-        val messageMentions = local.messageEventDao().getAll(conversationUUID)
-            .takeIf { it.isNotEmpty() }
-            .ifNull { return@withContext null }
-            .map { it.message }
-            .filter { it.uuid == message.uuid }
-            .sortedBy { it.sequence }
+            val messageMentions = local.messageEventDao().getAll(conversationUUID)
+                .takeIf { it.isNotEmpty() }
+                .ifNull { return@withContext null }
+                .map { it.message }
+                .filter { it.uuid == message.uuid }
+                .sortedBy { it.sequence }
 
-        return@withContext messageMentions.last()
-    }
+            return@withContext messageMentions.last()
+        }
 
-    suspend fun findAndRemoveMessage(
-        sequence: Long,
-        conversation: Conversation
-    ) = withContext(coroutineContext) {
+    suspend fun findAndRemoveMessage(sequence: Long, conversation: Conversation) =
+        withContext(coroutineContext) {
+            val message = findMessage(sequence, conversation.uuid)
+                .ifNull { return@withContext false }
 
-        val message = findMessage(sequence, conversation.uuid)
-            .ifNull { return@withContext false }
-
-        removeMessage(message.uuid, conversation)
-    }
+            removeMessage(message.uuid, conversation)
+        }
 
     suspend fun findAndEditMessage(
         sequence: Long,
@@ -713,82 +696,77 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         editMessage(message.uuid, conversation, text)
     }
 
-    private suspend fun removeMessage(
-        uuid: String,
-        conversation: Conversation
-    ) = suspendCoroutine<Boolean> { continuation ->
-
-        val voxMessage = recreateMessage(uuid, conversation.uuid)
-            .ifNull {
-                continuation.resume(false)
-                return@suspendCoroutine
-            }
-
-        remote.removeMessage(voxMessage) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxMessageEvent ->
-
-                local.conversationDao().updateLastUpdated(
-                    voxMessageEvent.timestamp,
-                    voxMessageEvent.sequence,
-                    voxMessageEvent.message.conversation
-                )
-
-                local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
-
-                if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
-                    activeConversation
-                        .postValue(
-                            local.conversationDao().loadByUUID(voxMessageEvent.message.conversation)
-                        )
-                    dataStateNotifier?.dataUpdated()
+    private suspend fun removeMessage(uuid: String, conversation: Conversation) =
+        suspendCoroutine<Boolean> { continuation ->
+            val voxMessage = recreateMessage(uuid, conversation.uuid)
+                .ifNull {
+                    continuation.resume(false)
+                    return@suspendCoroutine
                 }
 
-                needsRefresh = true
+            remote.removeMessage(voxMessage) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxMessageEvent ->
 
-                continuation.resume(true)
+                    local.conversationDao().updateLastUpdated(
+                        voxMessageEvent.timestamp,
+                        voxMessageEvent.sequence,
+                        voxMessageEvent.message.conversation,
+                    )
+
+                    local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
+
+                    if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
+                        activeConversation
+                            .postValue(
+                                local.conversationDao()
+                                    .loadByUUID(voxMessageEvent.message.conversation)
+                            )
+                        dataStateNotifier?.dataUpdated()
+                    }
+
+                    needsRefresh = true
+
+                    continuation.resume(true)
+                }
             }
         }
-    }
 
-    private suspend fun editMessage(
-        uuid: String,
-        conversation: Conversation,
-        text: String
-    ) = suspendCoroutine<Boolean> { continuation ->
-
-        val voxMessage = recreateMessage(uuid, conversation.uuid)
-            .ifNull {
-                continuation.resume(false)
-                return@suspendCoroutine
-            }
-
-        remote.editMessage(voxMessage, text) { result ->
-            result.onFailure { continuation.resume(false) }
-            result.onSuccess { voxMessageEvent ->
-
-                local.conversationDao().updateLastUpdated(
-                    voxMessageEvent.timestamp,
-                    voxMessageEvent.sequence,
-                    voxMessageEvent.message.conversation
-                )
-
-                local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
-
-                if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
-                    activeConversation
-                        .postValue(
-                            local.conversationDao().loadByUUID(voxMessageEvent.message.conversation)
-                        )
-                    dataStateNotifier?.dataUpdated()
+    private suspend fun editMessage(uuid: String, conversation: Conversation, text: String) =
+        suspendCoroutine<Boolean> { continuation ->
+            val voxMessage = recreateMessage(uuid, conversation.uuid)
+                .ifNull {
+                    continuation.resume(false)
+                    return@suspendCoroutine
                 }
 
-                needsRefresh = true
+            remote.editMessage(voxMessage, text) { result ->
+                result.onFailure { continuation.resume(false) }
+                result.onSuccess { voxMessageEvent ->
 
-                continuation.resume(true)
+                    local.conversationDao().updateLastUpdated(
+                        voxMessageEvent.timestamp,
+                        voxMessageEvent.sequence,
+                        voxMessageEvent.message.conversation,
+                    )
+
+                    local.messageEventDao().insert(builder.buildMessageEvent(voxMessageEvent))
+
+                    if (voxMessageEvent.message.conversation == activeConversation.value?.uuid) {
+                        activeConversation
+                            .postValue(
+                                local.conversationDao()
+                                    .loadByUUID(voxMessageEvent.message.conversation)
+                            )
+                        dataStateNotifier?.dataUpdated()
+                    }
+
+                    needsRefresh = true
+
+                    continuation.resume(true)
+                }
             }
         }
-    }
     //endregion
 
     //region Recreate
@@ -796,7 +774,11 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         remote.recreateMessage(uuid, conversationUUID)
 
     private fun recreateConversation(conversation: Conversation) =
-        remote.recreateConversation(conversation.uuid, builder.buildConfig(conversation), conversation.lastSequence)
+        remote.recreateConversation(
+            conversation.uuid,
+            builder.buildConfig(conversation),
+            conversation.lastSequence,
+        )
     //endregion
 
     //region Send Service Event
@@ -820,18 +802,16 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
     //endregion
 
     //region Retransmit Events
-    private suspend fun requestMessengerEvent(
-        conversationUUID: String,
-        sequence: Long
-    ) = withContext(coroutineContext) {
-        local.messageEventDao().get(conversationUUID, sequence)
-            ?: local.conversationEventDao().get(conversationUUID, sequence)
-    }
+    private suspend fun requestMessengerEvent(conversationUUID: String, sequence: Long) =
+        withContext(coroutineContext) {
+            local.messageEventDao().get(conversationUUID, sequence)
+                ?: local.conversationEventDao().get(conversationUUID, sequence)
+        }
 
     suspend fun requestMessengerEvents(
         conversation: Conversation,
         numberOfEvents: Int,
-        sequence: Long
+        sequence: Long,
     ) = withContext(coroutineContext) {
 
         val localEvents = getAllStoredEvents(conversation.uuid)
@@ -858,12 +838,19 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         localEventsRange.contains(localEventsRange.first)
 
         if (localEventsRange.contains(neededEventsRange)) {
-            val firstEventIndex = localEvents.indexOfFirst { it.sequence == neededEventsRange.first }
-            val lastEventIndex = localEvents.indexOfFirst { it.sequence == neededEventsRange.last }
+            val firstEventIndex = localEvents
+                .safeIndexOfFirst { it.sequence == neededEventsRange.first }
+                .ifNull { return@withContext Pair(listOf<EventWithAssociatedData>(), 1.toLong()) }
 
-            val processedEvents = processEvents(localEvents.subList(
-                firstEventIndex,
-                lastEventIndex + 1)
+            val lastEventIndex = localEvents
+                .safeIndexOfFirst { it.sequence == neededEventsRange.last }
+                .ifNull { return@withContext Pair(listOf<EventWithAssociatedData>(), 1.toLong()) }
+
+            val processedEvents = processEvents(
+                localEvents.subList(
+                    firstEventIndex,
+                    lastEventIndex + 1
+                )
             )
             return@withContext Pair(
                 prepareEventAssociatedData(processedEvents),
@@ -907,9 +894,8 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
     private suspend fun retransmitEvents(
         conversation: Conversation,
         numberOfEvents: Int,
-        sequence: Long
+        sequence: Long,
     ) = suspendCoroutine<List<MessengerEvent>?> { continuation ->
-
         val voxConversation = recreateConversation(conversation)
             .ifNull {
                 continuation.resume(null)
@@ -939,14 +925,17 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
 
         messageEvents.forEach { event ->
             when (event.action) {
-                SEND -> { }
+                SEND -> {
+                }
                 REMOVE -> messageEventsCopy.removeAll { it.message.uuid == event.message.uuid }
                 EDIT -> {
                     val messageMentions = messageEventsCopy
                         .filter { it.message.uuid == event.message.uuid }
                         .sortedBy { it.sequence }
 
-                    if (messageMentions.size <= 1) { return@forEach }
+                    if (messageMentions.size <= 1) {
+                        return@forEach
+                    }
 
                     val last = messageMentions.last()
                     val first = messageMentions.first()
@@ -955,7 +944,8 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
                         uuid = last.message.uuid,
                         text = last.message.text,
                         conversation = last.message.conversation,
-                        sequence = first.message.sequence
+                        payload = last.message.payload,
+                        sequence = first.message.sequence,
                     )
 
                     val updatedEvent = MessageEvent(
@@ -963,7 +953,7 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
                         action = EDIT,
                         message = message,
                         sequence = first.sequence,
-                        timestamp = first.timestamp
+                        timestamp = first.timestamp,
                     )
 
                     messageEventsCopy.removeAll { it.message.uuid == event.message.uuid }
@@ -977,18 +967,18 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
         return processedEvents
     }
 
-    private suspend fun prepareEventAssociatedData(
-        events: List<MessengerEvent>
-    ) = withContext(coroutineContext) {
-        val users = requestUsers(events.map { it.initiatorImId }.distinct())
-            .ifNull { return@withContext listOf<EventWithAssociatedData>() }
+    private suspend fun prepareEventAssociatedData(events: List<MessengerEvent>) =
+        withContext(coroutineContext) {
+            val users = requestUsers(events.map { it.initiatorImId }.distinct())
+                .ifEmpty { return@withContext listOf<EventWithAssociatedData>() }
+                .ifNull { return@withContext listOf<EventWithAssociatedData>() }
 
-        return@withContext events
-            .map { event ->
-                val user = users.first { it.imId == event.initiatorImId }
-                EventWithAssociatedData(event, user.displayName, user.imId == me)
-            }
-    }
+            return@withContext events
+                .map { event ->
+                    val user = users.first { it.imId == event.initiatorImId }
+                    EventWithAssociatedData(event, user.displayName, user.imId == me)
+                }
+        }
     //endregion
 
     //region VoximplantServiceListener
@@ -1023,11 +1013,13 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
             }
 
             if (activeConversation.value?.uuid == voxEvent.conversation.uuid) {
-                activeConversation.postValue(if (isStillInTheParticipantsList) {
-                    conversation
-                } else {
-                    null
-                })
+                activeConversation.postValue(
+                    if (isStillInTheParticipantsList) {
+                        conversation
+                    } else {
+                        null
+                    }
+                )
 
                 dataStateNotifier?.dataUpdated()
             }
@@ -1042,13 +1034,15 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
             local.conversationDao().updateLastUpdated(
                 voxEvent.timestamp,
                 voxEvent.sequence,
-                voxEvent.message.conversation
+                voxEvent.message.conversation,
             )
 
             local.messageEventDao().insert(builder.buildMessageEvent(voxEvent))
 
             if (voxEvent.message.conversation == activeConversation.value?.uuid) {
-                activeConversation.postValue(local.conversationDao().loadByUUID(voxEvent.message.conversation))
+                activeConversation.postValue(
+                    local.conversationDao().loadByUUID(voxEvent.message.conversation)
+                )
                 dataStateNotifier?.dataUpdated()
             }
         }
@@ -1068,15 +1062,19 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
                         .updateLastRead(
                             voxEvent.sequence,
                             voxEvent.imUserId,
-                            voxEvent.conversationUUID
+                            voxEvent.conversationUUID,
                         )
 
-                    if (voxEvent.imUserId == me) { return@launch }
+                    if (voxEvent.imUserId == me) {
+                        return@launch
+                    }
 
                     dataStateNotifier?.dataUpdated()
                 }
             } else {
-                if (voxEvent.imUserId == me) { return@launch }
+                if (voxEvent.imUserId == me) {
+                    return@launch
+                }
             }
 
             listener?.onServiceEvent(builder.buildServiceEvent(voxEvent))
@@ -1125,4 +1123,8 @@ class Repository(private val context: Context) : VoximplantServiceListener, VoxC
     }
 }
 
-data class EventWithAssociatedData(val event: MessengerEvent, val initiatorName: String, val isMy: Boolean)
+data class EventWithAssociatedData(
+    val event: MessengerEvent,
+    val initiatorName: String,
+    val isMy: Boolean,
+)

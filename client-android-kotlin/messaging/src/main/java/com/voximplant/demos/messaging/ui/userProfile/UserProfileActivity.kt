@@ -38,7 +38,7 @@ class UserProfileActivity: BaseActivity<UserProfileViewModel>(UserProfileViewMod
         profileInfoView_userProfile.type = DIRECT
         profileInfoView_userProfile.listener = this
 
-        model.user.observe(this, Observer {
+        model.user.observe(this, {
             it?.let { user ->
                 title = "Profile"
                 profileInfoView_userProfile.titleText = user.displayName

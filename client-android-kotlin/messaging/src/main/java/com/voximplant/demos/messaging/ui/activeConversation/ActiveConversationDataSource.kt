@@ -11,14 +11,14 @@ import kotlin.coroutines.CoroutineContext
 class ActiveConversationDataSource(
     val repository: Repository,
     val conversation: Conversation?,
-    override val coroutineContext: CoroutineContext
+    override val coroutineContext: CoroutineContext,
 ) : ItemKeyedDataSource<Long, MessengerEventModel>(), CoroutineScope {
 
     override fun getKey(item: MessengerEventModel) = item.sequence - 1
 
     override fun loadInitial(
         params: LoadInitialParams<Long>,
-        callback: LoadInitialCallback<MessengerEventModel>
+        callback: LoadInitialCallback<MessengerEventModel>,
     ) {
         launch {
             val conversation = conversation
@@ -27,7 +27,7 @@ class ActiveConversationDataSource(
             val eventsWithData = repository.requestMessengerEvents(
                 conversation,
                 params.requestedLoadSize,
-                conversation.lastSequence
+                conversation.lastSequence,
             )
 
             callback
@@ -37,7 +37,7 @@ class ActiveConversationDataSource(
                             it.event,
                             it.initiatorName,
                             it.isMy,
-                            eventsWithData.second >= it.event.sequence
+                            eventsWithData.second >= it.event.sequence,
                         )
                     }
                 )
@@ -46,7 +46,7 @@ class ActiveConversationDataSource(
 
     override fun loadBefore(
         params: LoadParams<Long>,
-        callback: LoadCallback<MessengerEventModel>
+        callback: LoadCallback<MessengerEventModel>,
     ) {
         launch {
             if (params.key.toInt() == 0) {
@@ -62,7 +62,7 @@ class ActiveConversationDataSource(
                 val eventsWithData = repository.requestMessengerEvents(
                     conversation,
                     params.requestedLoadSize,
-                    params.key
+                    params.key,
                 )
 
                 callback
@@ -72,7 +72,7 @@ class ActiveConversationDataSource(
                                 it.event,
                                 it.initiatorName,
                                 it.isMy,
-                                eventsWithData.second >= it.event.sequence
+                                eventsWithData.second >= it.event.sequence,
                             )
                         }
                     )
@@ -80,5 +80,9 @@ class ActiveConversationDataSource(
         }
     }
 
-    override fun loadAfter(params: LoadParams<Long>, callback: LoadCallback<MessengerEventModel>) { } // not used
+    override fun loadAfter(
+        params: LoadParams<Long>,
+        callback: LoadCallback<MessengerEventModel>,
+    ) {
+    } // not used
 }

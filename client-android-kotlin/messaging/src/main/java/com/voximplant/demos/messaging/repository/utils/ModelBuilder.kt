@@ -14,13 +14,13 @@ class ModelBuilder {
             imId = voxUser.imId,
             name = voxUser.name,
             displayName = voxUser.displayName,
-            customData = voxUser.customData
+            customData = voxUser.customData,
         )
     }
     //endregion
 
     //region Conversation
-    fun buildConversation(voxConversation: IConversation) : Conversation {
+    fun buildConversation(voxConversation: IConversation): Conversation {
         return Conversation(
             uuid = voxConversation.uuid,
             title = voxConversation.title,
@@ -30,11 +30,11 @@ class ModelBuilder {
             isDirect = voxConversation.isDirect,
             isPublic = voxConversation.isPublicJoin,
             isUber = voxConversation.isUber,
-            customData = voxConversation.customData
+            customData = voxConversation.customData,
         )
     }
 
-    fun buildConfig(conversation: Conversation) : ConversationConfig {
+    fun buildConfig(conversation: Conversation): ConversationConfig {
         return ConversationConfig
             .createBuilder()
             .setTitle(conversation.title)
@@ -46,18 +46,22 @@ class ModelBuilder {
             .build()
     }
 
-    fun buildCustomData(type: ConversationType, pictureName: String? = null, description: String? = null) : CustomData {
+    fun buildCustomData(
+        type: ConversationType,
+        pictureName: String? = null,
+        description: String? = null,
+    ): CustomData {
         val customData: CustomData = mutableMapOf()
         customData.type = type.stringValue
         customData.permissions = type.defaultPermissions
-        pictureName?.let { customData.image = it}
-        description?.let { customData.chatDescription = it}
+        pictureName?.let { customData.image = it }
+        description?.let { customData.chatDescription = it }
         return customData
     }
     //endregion
 
     //region Participant
-    fun buildVoxParticipant(participant: Participant) : ConversationParticipant {
+    fun buildVoxParticipant(participant: Participant): ConversationParticipant {
         return ConversationParticipant(participant.userImId)
             .setOwner(participant.isOwner)
             .setCanManageParticipants(participant.permissions.canManageParticipants)
@@ -67,8 +71,11 @@ class ModelBuilder {
             .setCanRemoveMessages(participant.permissions.canRemoveMessages)
             .setCanRemoveAllMessages(participant.permissions.canRemoveAllMessages)
     }
-    
-    fun buildDefaultVoxParticipant(ImId: Long, conversationType: ConversationType) : ConversationParticipant {
+
+    fun buildDefaultVoxParticipant(
+        ImId: Long,
+        conversationType: ConversationType,
+    ): ConversationParticipant {
         return ConversationParticipant(ImId)
             .setOwner(false)
             .setCanManageParticipants(conversationType.defaultPermissions.canManageParticipants)
@@ -79,7 +86,10 @@ class ModelBuilder {
             .setCanRemoveAllMessages(conversationType.defaultPermissions.canRemoveAllMessages)
     }
 
-    fun buildParticipant(voxParticipant: ConversationParticipant, conversationUUID: String) : Participant {
+    fun buildParticipant(
+        voxParticipant: ConversationParticipant,
+        conversationUUID: String,
+    ): Participant {
         return Participant(
             isOwner = voxParticipant.isOwner,
             userImId = voxParticipant.imUserId,
@@ -91,13 +101,13 @@ class ModelBuilder {
     //endregion
 
     //region Permissions
-    private fun buildPermissions(voxParticipant: ConversationParticipant) : Permissions {
+    private fun buildPermissions(voxParticipant: ConversationParticipant): Permissions {
         val permissions: Permissions = mutableMapOf()
-        permissions.canWrite              = voxParticipant.canWrite()
-        permissions.canEditMessages       = voxParticipant.canEditMessages()
-        permissions.canEditAllMessages    = voxParticipant.canEditAllMessages()
-        permissions.canRemoveMessages     = voxParticipant.canRemoveMessages()
-        permissions.canRemoveAllMessages  = voxParticipant.canRemoveAllMessages()
+        permissions.canWrite = voxParticipant.canWrite()
+        permissions.canEditMessages = voxParticipant.canEditMessages()
+        permissions.canEditAllMessages = voxParticipant.canEditAllMessages()
+        permissions.canRemoveMessages = voxParticipant.canRemoveMessages()
+        permissions.canRemoveAllMessages = voxParticipant.canRemoveAllMessages()
         permissions.canManageParticipants = voxParticipant.canManageParticipants()
         return permissions
     }
@@ -113,6 +123,7 @@ class ModelBuilder {
             else -> throw IllegalArgumentException("$voxEvent is Unknown")
         }
     }
+
     //region Conversation
     fun buildConversationEvent(voxEvent: IConversationEvent): ConversationEvent {
         return ConversationEvent(
@@ -126,12 +137,12 @@ class ModelBuilder {
 
     private fun translateConversationEventAction(voxAction: MessengerAction): ConversationEventAction {
         return when (voxAction) {
-            MessengerAction.ADD_PARTICIPANTS    -> ConversationEventAction.ADD_PARTICIPANTS
-            MessengerAction.EDIT_PARTICIPANTS   -> ConversationEventAction.EDIT_PARTICIPANTS
+            MessengerAction.ADD_PARTICIPANTS -> ConversationEventAction.ADD_PARTICIPANTS
+            MessengerAction.EDIT_PARTICIPANTS -> ConversationEventAction.EDIT_PARTICIPANTS
             MessengerAction.REMOVE_PARTICIPANTS -> ConversationEventAction.REMOVE_PARTICIPANTS
-            MessengerAction.EDIT_CONVERSATION   -> ConversationEventAction.EDIT_CONVERSATION
-            MessengerAction.JOIN_CONVERSATION   -> ConversationEventAction.JOIN_CONVERSATION
-            MessengerAction.LEAVE_CONVERSATION  -> ConversationEventAction.LEAVE_CONVERSATION
+            MessengerAction.EDIT_CONVERSATION -> ConversationEventAction.EDIT_CONVERSATION
+            MessengerAction.JOIN_CONVERSATION -> ConversationEventAction.JOIN_CONVERSATION
+            MessengerAction.LEAVE_CONVERSATION -> ConversationEventAction.LEAVE_CONVERSATION
             MessengerAction.CREATE_CONVERSATION -> ConversationEventAction.CREATE_CONVERSATION
             MessengerAction.REMOVE_CONVERSATION -> ConversationEventAction.REMOVE_CONVERSATION
             else -> throw IllegalArgumentException("$voxAction is Unknown")
@@ -140,7 +151,7 @@ class ModelBuilder {
     //endregion
 
     //region Message
-    fun buildMessageEvent(voxEvent: IMessageEvent) : MessageEvent {
+    fun buildMessageEvent(voxEvent: IMessageEvent): MessageEvent {
         return MessageEvent(
             initiatorImId = voxEvent.imUserId,
             action = translateMessageEventAction(voxEvent.messengerAction),
@@ -150,19 +161,20 @@ class ModelBuilder {
         )
     }
 
-    private fun buildMessage(voxMessage: IMessage) : Message {
+    private fun buildMessage(voxMessage: IMessage): Message {
         return Message(
             uuid = voxMessage.uuid,
             text = voxMessage.text ?: "empty string!!",
+            payload = voxMessage.payload,
             conversation = voxMessage.conversation,
             sequence = voxMessage.sequence
         )
     }
 
-    private fun translateMessageEventAction(voxAction: MessengerAction) : MessageEventAction {
+    private fun translateMessageEventAction(voxAction: MessengerAction): MessageEventAction {
         return when (voxAction) {
-            MessengerAction.SEND_MESSAGE   -> MessageEventAction.SEND
-            MessengerAction.EDIT_MESSAGE   -> MessageEventAction.EDIT
+            MessengerAction.SEND_MESSAGE -> MessageEventAction.SEND
+            MessengerAction.EDIT_MESSAGE -> MessageEventAction.EDIT
             MessengerAction.REMOVE_MESSAGE -> MessageEventAction.REMOVE
             else -> throw IllegalArgumentException("$voxAction is Unknown")
         }
@@ -170,7 +182,7 @@ class ModelBuilder {
     //endregion
 
     //region Service
-    fun buildServiceEvent(voxEvent: IConversationServiceEvent) : ServiceEvent {
+    fun buildServiceEvent(voxEvent: IConversationServiceEvent): ServiceEvent {
         return ServiceEvent(
             initiatorImId = voxEvent.imUserId,
             action = translateServiceAction(voxEvent.messengerAction),
@@ -179,24 +191,24 @@ class ModelBuilder {
         )
     }
 
-    private fun translateServiceAction(voxAction: MessengerAction) : ServiceEventAction {
+    private fun translateServiceAction(voxAction: MessengerAction): ServiceEventAction {
         return when (voxAction) {
             MessengerAction.IS_READ -> ServiceEventAction.READ
             MessengerAction.TYPING_MESSAGE -> ServiceEventAction.TYPING
-            else  -> throw IllegalArgumentException("$voxAction is Unknown")
+            else -> throw IllegalArgumentException("$voxAction is Unknown")
         }
     }
     //endregion
 
     //region User
-    private fun buildUserEvent(voxEvent: IUserEvent) : UserEvent {
+    private fun buildUserEvent(voxEvent: IUserEvent): UserEvent {
         return UserEvent(
             initiatorImId = voxEvent.imUserId,
             action = translateUserAction(voxEvent.messengerAction)
         )
     }
 
-    private fun translateUserAction(voxAction: MessengerAction) : UserEventAction {
+    private fun translateUserAction(voxAction: MessengerAction): UserEventAction {
         return when (voxAction) {
             MessengerAction.EDIT_USER -> UserEventAction.EDIT
             else -> throw IllegalArgumentException("$voxAction is Unknown")

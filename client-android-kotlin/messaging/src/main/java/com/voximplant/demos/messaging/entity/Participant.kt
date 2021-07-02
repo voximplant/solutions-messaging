@@ -10,5 +10,5 @@ data class Participant(
     var isOwner: Boolean,
     var userImId: Long,
     var permissions: Permissions,
-    var lastReadSequence: Long
+    var lastReadSequence: Long,
 )

@@ -13,9 +13,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginEnd="16dp"
         app:layout_constraintBottom_toTopOf="@+id/text_input_layout_password"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/vox_domain_label"
         app:layout_constraintStart_toStartOf="parent">
 
         <EditText
@@ -33,6 +32,19 @@
             tools:ignore="UnusedAttribute" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/vox_domain_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:fontFamily="@font/roboto"
+        android:text="@string/voximplant_com"
+        app:layout_constraintBottom_toBottomOf="@+id/text_input_layout_email"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/text_input_layout_email" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/text_input_layout_password"
@@ -102,8 +114,8 @@
         android:textColor="@color/colorWhite"
         android:textSize="24sp"
         app:layout_constraintBottom_toTopOf="@+id/text_input_layout_email"
-        app:layout_constraintEnd_toEndOf="@+id/text_input_layout_email"
-        app:layout_constraintStart_toStartOf="@+id/text_input_layout_email" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:layout_width="wrap_content"
