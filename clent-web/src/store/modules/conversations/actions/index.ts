@@ -29,6 +29,12 @@ const actions: ActionTree<ConversationsState, any> = {
     );
   },
 
+  addUser: ({ commit, state }, { user }) => {
+    if (!state.users.some(u => u.userId === user.userId)) {
+      commit('updateUsers', [user]);
+    }
+  },
+
   editUser: (context, customData: { image: string, status: string }) => {
     MessengerService.get().editUserCustomData(customData).then((evt: UserEvents) => {
       context.commit('updateCurrentUser', evt.user);

@@ -9,7 +9,7 @@
                 img(left :src="require(`@/assets/avatars/${selection.customData.image}.png`)" :disabled="loading")
               v-icon(left v-else :disabled="loading" dark) account_circle
               div {{ selection.displayName }}
-        v-col(v-if="!allSelected" :cols="isAdd ? '11' : '12'" class="pa-0")
+        v-col(:cols="isAdd ? '11' : '12'" class="pa-0")
           v-text-field(
             prepend-inner-icon="search"
             class="pa-0"
@@ -17,6 +17,8 @@
             v-model="search"
             full-width
             hide-details
+            @keypress.enter="searchUser"
+            @blur="searchUser"
             label="Search"
             single-line)
         v-col(v-if="!allSelected && isAdd" cols="1" class="pa-0")
@@ -41,6 +43,8 @@ import { namespace } from 'vuex-class';
 import { log, logHelp } from '@/utils';
 import AddMembers from '@/components/ui/AddMembers.vue';
 import { User } from '@/types/src/conversations';
+import MessengerService from '@/services/messenger.service';
+import { MY_APP } from '@/config';
 
 const conversationStore = namespace('conversations');
 
@@ -57,15 +61,37 @@ export default class ListUsers extends Vue {
   @Prop() chatUsers: any;
 
   @conversationStore.State readonly users: any;
+  @conversationStore.Action addUser: any;
 
   public loading = false;
   public search: string = '';
   public selected: any[] = [];
   public showAddMembers: boolean = false;
+  private inputDebounced = false;
 
   @Watch('selected')
   onSelectedChanged() {
     this.search = ''
+  }
+
+  @Watch('search')
+  searchUserThrottled() {
+    if (this.inputDebounced) return;
+    this.searchUser();
+    this.inputDebounced = true;
+    setTimeout(() => {
+      this.inputDebounced = false;
+      this.searchUser();
+    }, 1500);
+  }
+
+  searchUser() {
+    if (!this.search) return;
+    const fullUserName = `${this.search.toLowerCase()}@${MY_APP}.voximplant.com`;
+    MessengerService.messenger.getUser(fullUserName).then((user: any) => {
+      this.addUser(user);
+    }).catch((e: any) => {
+    });
   }
 
   get isChips() {
