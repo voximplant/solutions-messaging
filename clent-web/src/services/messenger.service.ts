@@ -67,7 +67,12 @@ export default class MessengerService {
       })
       .then((evts: any) => {
         logHelp('Conversation participants user info received', evts);
-        initialData.users = evts.map((e: any) => e.user);
+        if (localStorage.getItem('users')) {
+          initialData.users = JSON.parse(localStorage.getItem('users'));
+        } else {
+          initialData.users = evts.map((e: any) => e.user);
+          localStorage.setItem('users', JSON.stringify(initialData.users));
+        }
       })
       .catch(logError);
 

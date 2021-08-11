@@ -32,6 +32,14 @@ const actions: ActionTree<ConversationsState, any> = {
   addUser: ({ commit, state }, { user }) => {
     if (!state.users.some(u => u.userId === user.userId)) {
       commit('updateUsers', [user]);
+      if (localStorage.getItem('users')) {
+        const users = JSON.parse(localStorage.getItem('users'));
+        if (!users.includes(user)) {
+          localStorage.setItem('users', JSON.stringify(users.concat([user])));
+        }
+      } else {
+        localStorage.setItem('users', JSON.stringify([user]));
+      }
     }
   },
 

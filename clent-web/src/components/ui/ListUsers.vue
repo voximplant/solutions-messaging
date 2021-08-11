@@ -68,6 +68,7 @@ export default class ListUsers extends Vue {
   public selected: any[] = [];
   public showAddMembers: boolean = false;
   private inputDebounced = false;
+  private inputTimeout = false;
 
   @Watch('selected')
   onSelectedChanged() {
@@ -76,12 +77,18 @@ export default class ListUsers extends Vue {
 
   @Watch('search')
   searchUserThrottled() {
-    if (this.inputDebounced) return;
+    if (this.inputDebounced) {
+      this.inputTimeout = false;
+      return;
+    }
     this.searchUser();
     this.inputDebounced = true;
     setTimeout(() => {
       this.inputDebounced = false;
-      this.searchUser();
+      if (!this.inputTimeout) {
+        this.searchUser();
+        this.inputTimeout = true;
+      }
     }, 1500);
   }
 
@@ -90,8 +97,7 @@ export default class ListUsers extends Vue {
     const fullUserName = `${this.search.toLowerCase()}@${MY_APP}.voximplant.com`;
     MessengerService.messenger.getUser(fullUserName).then((user: any) => {
       this.addUser(user);
-    }).catch((e: any) => {
-    });
+    }).catch(() => {});
   }
 
   get isChips() {
