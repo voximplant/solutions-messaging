@@ -5,6 +5,7 @@ import android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.maps.model.LatLng
@@ -104,11 +105,9 @@ class ActiveConversationActivity :
             }
 
             if (permissions.canWrite) {
-                message_container_layout.minHeight = 52
-                message_container_layout.maxHeight = 300
+                message_container_layout.visibility = View.VISIBLE
             } else {
-                message_container_layout.minHeight = 0
-                message_container_layout.maxHeight = 0
+                message_container_layout.visibility = View.GONE
             }
         })
 
@@ -141,11 +140,13 @@ class ActiveConversationActivity :
 
         showProgressHUD(getString(R.string.progress_sending))
 
-        model.sendLocation(LatLng(lat,lon)) {
+        model.sendLocation(LatLng(lat, lon)) {
             hideProgressHUD()
 
             create_message_text_view.setText("")
-            if (!it) { showError(getString(R.string.could_not_share_location)) }
+            if (!it) {
+                showError(getString(R.string.could_not_share_location))
+            }
         }
     }
 

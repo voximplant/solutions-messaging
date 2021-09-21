@@ -3,6 +3,7 @@ package com.voximplant.demos.messaging.ui.createChat
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import androidx.activity.viewModels
 import androidx.core.app.NavUtils
@@ -14,6 +15,8 @@ import com.voximplant.demos.messaging.ui.activeConversation.ActiveConversationAc
 import com.voximplant.demos.messaging.ui.userSearch.UserSearchViewModel
 import com.voximplant.demos.messaging.utils.BaseActivity
 import kotlinx.android.synthetic.main.activity_create_chat.*
+import kotlinx.android.synthetic.main.activity_create_direct.*
+import kotlinx.android.synthetic.main.activity_user_profile.*
 import kotlinx.android.synthetic.main.profile_info_view.*
 
 class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel::class.java) {
@@ -46,6 +49,14 @@ class CreateChatActivity : BaseActivity<CreateChatViewModel>(CreateChatViewModel
 
         model.users.observe(this, { users ->
             userSearchModel.usersList.value = users
+        })
+
+        userSearchModel.filterString.observe(this, {
+            if (it.isEmpty()) {
+                profileInfoView.visibility = View.VISIBLE
+            } else {
+                profileInfoView.visibility = View.GONE
+            }
         })
 
         userSearchModel.selectedItem.observe(this, { user ->

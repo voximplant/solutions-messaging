@@ -2,6 +2,7 @@ package com.voximplant.demos.messaging.repository
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.room.Room
 import com.voximplant.demos.messaging.entity.*
@@ -11,8 +12,7 @@ import com.voximplant.demos.messaging.entity.events.MessengerEvent
 import com.voximplant.demos.messaging.entity.events.MessengerEvent.ConversationEvent
 import com.voximplant.demos.messaging.entity.events.MessengerEvent.MessageEvent
 import com.voximplant.demos.messaging.manager.VoxClientManagerListener
-import com.voximplant.demos.messaging.repository.Repository.RefreshState.READY
-import com.voximplant.demos.messaging.repository.Repository.RefreshState.REFRESHING
+import com.voximplant.demos.messaging.repository.Repository.RefreshState.*
 import com.voximplant.demos.messaging.repository.local.AppDatabase
 import com.voximplant.demos.messaging.repository.remote.VoximplantService
 import com.voximplant.demos.messaging.repository.remote.VoximplantServiceListener
@@ -65,10 +65,12 @@ class Repository(private val context: Context) : VoximplantServiceListener,
             value?.saveToPrefs(context, MY_IMID) ?: MY_IMID.removeKeyFromPrefs(context)
         }
 
-    private enum class RefreshState { READY, REFRESHING }
+    enum class RefreshState { READY, REFRESHING }
 
     private var needsRefresh: Boolean = false
-    private var refreshState: RefreshState = READY
+
+    private val _refreshState = MutableLiveData(READY)
+    val refreshState: LiveData<RefreshState> = _refreshState
 
     init {
         remote.setListener(this)
@@ -110,7 +112,7 @@ class Repository(private val context: Context) : VoximplantServiceListener,
             local.userDao().deleteAll()
             me = null
 
-            refreshState = READY
+            _refreshState.postValue(READY)
             needsRefresh = false
 
             Log.e(APP_TAG, "data removed")
@@ -121,19 +123,16 @@ class Repository(private val context: Context) : VoximplantServiceListener,
     //region Data updates
     suspend fun refreshData() {
         withContext(coroutineContext) {
-            if (refreshState == REFRESHING) {
+            if (_refreshState.value == REFRESHING) {
                 return@withContext
             }
-            refreshState = REFRESHING
-
+            _refreshState.postValue(REFRESHING)
             if (needsRefresh) {
-                refreshState = READY
                 needsRefresh = false
                 refreshData()
                 return@withContext
             }
 
-            local.userDao().deleteAll()
             val username = remote.myUsername
                 .ifNull { return@withContext }
 
@@ -144,6 +143,7 @@ class Repository(private val context: Context) : VoximplantServiceListener,
 
             if (list.size == 0) {
                 local.conversationDao().deleteAll()
+                _refreshState.postValue(READY)
                 return@withContext
             }
 
@@ -151,7 +151,6 @@ class Repository(private val context: Context) : VoximplantServiceListener,
                 .ifNull { return@withContext }
 
             if (needsRefresh) {
-                refreshState = READY
                 needsRefresh = false
                 refreshData()
                 return@withContext
@@ -175,7 +174,7 @@ class Repository(private val context: Context) : VoximplantServiceListener,
             local.conversationDao().deleteAll()
             local.conversationDao().insertAllConversations(actualConversations)
 
-            refreshState = READY
+            _refreshState.postValue(READY)
             needsRefresh = false
         }
     }
@@ -281,7 +280,7 @@ class Repository(private val context: Context) : VoximplantServiceListener,
             .setDirect(false)
             .setUber(false)
             .setPublicJoin(true)
-            .setParticipants(users.map { builder.buildDefaultVoxParticipant(it.imId, CHAT) })
+            .setParticipants(users.map { builder.buildDefaultVoxParticipant(it.imId, CHANNEL) })
             .setCustomData(builder.buildCustomData(CHANNEL, pictureName, description))
 
         createConversation(builder.build())
@@ -975,7 +974,9 @@ class Repository(private val context: Context) : VoximplantServiceListener,
 
             return@withContext events
                 .map { event ->
-                    val user = users.first { it.imId == event.initiatorImId }
+                    val user = users
+                        .firstOrNull { it.imId == event.initiatorImId }
+                        .ifNull { return@withContext listOf<EventWithAssociatedData>() }
                     EventWithAssociatedData(event, user.displayName, user.imId == me)
                 }
         }
@@ -989,6 +990,14 @@ class Repository(private val context: Context) : VoximplantServiceListener,
             val me = me
                 .ifNull { return@launch }
 
+            if (voxEvent.messengerEventType == MessengerEventType.ON_REMOVE_CONVERSATION) {
+                local.conversationDao().deleteByUUID(voxEvent.conversation.uuid)
+                local.conversationEventDao().deleteAllWithUUID(voxEvent.conversation.uuid)
+                if (activeConversation.value?.uuid == voxEvent.conversation.uuid) {
+                    activeConversation.postValue(null)
+                }
+                return@launch
+            }
             val conversation = builder.buildConversation(voxEvent.conversation)
 
             var isStillInTheParticipantsList = false

@@ -62,8 +62,8 @@
             android:layout_width="19dp"
             android:layout_height="19dp"
             android:layout_gravity="center"
-            android:tint="@color/colorWhite"
-            app:srcCompat="@drawable/ic_channel_48px" />
+            app:srcCompat="@drawable/ic_channel"
+            app:tint="@color/colorWhite" />
     </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -50,20 +50,20 @@ class ProfileInfoView @JvmOverloads constructor(
             when (type) {
                 DIRECT -> {
                     showSwitches = false
-                    titleHintText = "Enter Full Name"
-                    descriptionHintText = "Enter Bio"
+                    titleHintText = if (isEditingAllowed) "Full Name" else null
+                    descriptionHintText = "Bio"
                     profile_info_title_edit_text.isEnabled = false
                     profile_info_title_edit_text.setBackgroundResource(android.R.color.transparent)
                 }
                 CHAT -> {
                     showSwitches = isEditingAllowed
-                    titleHintText = "Enter Group Name"
-                    descriptionHintText = "Enter Description"
+                    titleHintText = if (isEditingAllowed) "Group Name" else null
+                    descriptionHintText = "Description"
                 }
                 CHANNEL -> {
                     showSwitches = false
-                    titleHintText = "Enter Channel Name"
-                    descriptionHintText = "Enter Description"
+                    titleHintText = if (isEditingAllowed) "Channel Name" else null
+                    descriptionHintText = "Description"
                 }
             }
             field = type
@@ -81,7 +81,7 @@ class ProfileInfoView @JvmOverloads constructor(
 
     private var titleHintText: String? = null
         set(value) {
-            profile_info_title_edit_text.hint = value
+            profile_info_title_text_layout.hint = value
             field = value
         }
 
@@ -94,7 +94,7 @@ class ProfileInfoView @JvmOverloads constructor(
 
     private var descriptionHintText: String? = null
         set(value) {
-            profile_info_description_edit_text.hint = value
+            profile_info_description_text_layout.hint = value
             field = value
         }
 
@@ -112,7 +112,7 @@ class ProfileInfoView @JvmOverloads constructor(
             } ?: run {
                 profile_image_view.setImageBitmap(
                     ProfilePictureGenerator
-                        .createTextImage(titleText?.firstLetters()?.take(2) ?: "")
+                        .createTextImage(if (!isEditingAllowed) titleText?.firstLetters()?.take(2) ?: "" else "")
                 )
             }
             field = value

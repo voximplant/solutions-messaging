@@ -112,40 +112,41 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/cancel_button"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
             android:layout_marginLeft="5dp"
             android:layout_marginEnd="5dp"
             android:layout_marginRight="5dp"
             android:layout_marginBottom="5dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="@android:string/cancel"
-            android:textColor="@color/colorRed"
-            app:rippleColor="@color/colorAccent"
             android:backgroundTint="@color/containerLight"
+            android:text="@string/cancel"
+            android:textColor="@color/colorRed"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/save_image_button"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/image_views_container" />
+            app:layout_constraintTop_toBottomOf="@+id/image_views_container"
+            app:layout_constraintVertical_bias="0.0"
+            app:rippleColor="@color/colorAccent" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/save_image_button"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="3dp"
-            android:layout_marginRight="3dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginLeft="5dp"
+            android:layout_marginEnd="5dp"
+            android:layout_marginRight="5dp"
             android:layout_marginBottom="5dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="Save"
-            android:textColor="@color/text"
-            app:rippleColor="@color/colorAccent"
             android:backgroundTint="@color/containerLight"
+            android:text="@string/save"
+            android:textColor="@color/text"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/cancel_button"
             app:layout_constraintTop_toBottomOf="@+id/image_views_container"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintVertical_bias="0.0"
+            app:rippleColor="@color/colorAccent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

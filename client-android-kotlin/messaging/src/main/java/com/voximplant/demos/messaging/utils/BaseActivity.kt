@@ -7,6 +7,8 @@ import android.view.WindowManager
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.voximplant.demos.messaging.R
+import com.voximplant.demos.messaging.repository.Repository
 import com.voximplant.demos.messaging.ui.login.LoginActivity
 
 abstract class BaseActivity<T : BaseViewModel>(private val modelType: Class<T>) :
@@ -40,8 +42,18 @@ abstract class BaseActivity<T : BaseViewModel>(private val modelType: Class<T>) 
             showError(resources.getString(textID))
         })
 
+        model.refreshState.observe(this, {
+            if (it == Repository.RefreshState.READY) {
+                supportActionBar?.subtitle = null
+            } else {
+                supportActionBar?.subtitle = getString(R.string.updating)
+            }
+        })
+
         model.subtitle.observe(this, {
-            supportActionBar?.subtitle = it
+            if (it == null && model.refreshState.value == Repository.RefreshState.READY) {
+                supportActionBar?.subtitle = it
+            }
         })
 
         model.finish.observe(this, {

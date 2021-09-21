@@ -1,9 +1,11 @@
 package com.voximplant.demos.messaging.utils
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.voximplant.demos.messaging.manager.VoxClientManagerListener
+import com.voximplant.demos.messaging.repository.Repository
 import com.voximplant.demos.messaging.repository.RepositoryListener
 import kotlinx.coroutines.launch
 
@@ -31,6 +33,8 @@ abstract class BaseViewModel : ViewModel(), VoxClientManagerListener, Repository
     val stringToast = MutableLiveData<String>()
 
     val showConnectionError = MutableLiveData<String?>()
+
+    val refreshState: LiveData<Repository.RefreshState> = repository.refreshState
 
     protected fun <T : Comparable<T>> postError(error: T) {
         when (error) {

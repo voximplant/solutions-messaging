@@ -38,5 +38,11 @@
     <string name="could_not_remove_message">Couldn\'t remove message</string>
     <string name="could_not_send_message">Couldn\'t send the message</string>
     <string name="could_not_edit_message">Couldn\'t edit message</string>
+    <string name="no_conversations_found">No conversations found</string>
+    <string name="updating">Updating..</string>
+    <string name="type_public">Public</string>
+    <string name="type_uber">Uber</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
 </resources>
 

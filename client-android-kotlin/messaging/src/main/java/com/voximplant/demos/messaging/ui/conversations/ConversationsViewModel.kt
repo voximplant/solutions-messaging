@@ -1,14 +1,13 @@
 package com.voximplant.demos.messaging.ui.conversations
 
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.liveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.voximplant.demos.messaging.utils.BaseViewModel
 import com.voximplant.demos.messaging.utils.ifNull
 import kotlinx.coroutines.Dispatchers
 
 class ConversationsViewModel : BaseViewModel() {
     private val conversations = repository.conversations
+
     val conversationModels = Transformations.switchMap(conversations) {
         liveData(viewModelScope.coroutineContext + Dispatchers.IO) {
 

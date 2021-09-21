@@ -36,8 +36,8 @@ class ConversationsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView
 
             conversation_type_image_view.setImageDrawable(
                 when (model.type) {
-                    CHAT -> context.getDrawableById(R.drawable.ic_group_48px)
-                    CHANNEL -> context.getDrawableById(R.drawable.ic_channel_48px)
+                    CHAT -> context.getDrawableById(R.drawable.ic_users_circle)
+                    CHANNEL -> context.getDrawableById(R.drawable.ic_channel)
                     else -> return@with
                 }
             )

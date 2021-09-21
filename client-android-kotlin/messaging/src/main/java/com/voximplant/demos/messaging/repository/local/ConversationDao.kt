@@ -25,6 +25,9 @@ interface ConversationDao {
     @Delete
     fun delete(conversation: Conversation)
 
+    @Query("DELETE FROM conversation WHERE uuid = :uuid")
+    fun deleteByUUID(uuid: String)
+
     @Query("DELETE FROM conversation")
     fun deleteAll()
 
