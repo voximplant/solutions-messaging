@@ -6,7 +6,7 @@ import UIKit
 
 protocol MovingWithKeyboard: AnyObject {
     var adjusted: Bool { get set }
-    var defaultPositionY: CGFloat { get set }
+    var defaultValue: CGFloat { get set }
     var moveMultiplier: CGFloat { get }
     var keyboardWillChangeFrameObserver: NSObjectProtocol? { get set }
     var keyboardWillHideObserver: NSObjectProtocol? { get set }
@@ -21,20 +21,24 @@ extension MovingWithKeyboard where Self: UIViewController {
             object: nil,
             queue: OperationQueue.main
         ) { [weak self] notification in
-            guard let keyboardValue = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue,
+            guard let keyboardBeginFrame = notification.userInfo?[UIResponder.keyboardFrameBeginUserInfoKey] as? CGRect,
+                  let keyboardEndFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
                 let self = self
                 else { return }
-            let keyboardScreenEndFrame = keyboardValue.cgRectValue
+            
             if !self.adjusted {
-                self.defaultPositionY = self.view.frame.origin.y
                 if #available(iOS 11.0, *) {
-                    self.view.frame.origin.y -= (keyboardScreenEndFrame.height - self.view.safeAreaInsets.bottom) * self.moveMultiplier
+                    let keyboardHeight = keyboardBeginFrame.origin.y - keyboardEndFrame.origin.y
+                    self.defaultValue = keyboardHeight - self.view.safeAreaInsets.bottom
+                    self.additionalSafeAreaInsets.bottom += keyboardHeight - self.view.safeAreaInsets.bottom
                 } else {
-                    self.view.frame.origin.y -= (keyboardScreenEndFrame.height) * self.moveMultiplier
+                    self.defaultValue = self.view.frame.origin.y
+                    self.view.frame.origin.y -= (keyboardEndFrame.height) * self.moveMultiplier
                 }
                 self.adjusted = true
             }
         }
+        
         
         keyboardWillHideObserver = NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillHideNotification,
@@ -42,8 +46,16 @@ extension MovingWithKeyboard where Self: UIViewController {
             queue: OperationQueue.main
         ) { [weak self] notification in
             guard let self = self else { return }
-            self.view.frame.origin.y = self.defaultPositionY
-            self.adjusted = false
+            
+            if self.adjusted {
+                if #available(iOS 11.0, *) {
+                    self.additionalSafeAreaInsets.bottom -= self.defaultValue
+                } else {
+                    self.view.frame.origin.y = self.defaultValue
+                }
+                
+                self.adjusted = false
+            }
         }
     }
     
@@ -72,7 +84,7 @@ extension MovingWithKeyboard where Self: UIView {
             }
             let keyboardScreenEndFrame = keyboardValue.cgRectValue
             if !self.adjusted {
-                self.defaultPositionY = self.frame.origin.y
+                self.defaultValue = self.frame.origin.y
                 if #available(iOS 11.0, *) {
                     self.frame.origin.y -=
                         (keyboardScreenEndFrame.height - self.safeAreaInsets.bottom) / 2
@@ -89,7 +101,7 @@ extension MovingWithKeyboard where Self: UIView {
             queue: OperationQueue.main
         ) { [weak self] notification in
             guard let self = self else { return }
-            self.frame.origin.y = self.defaultPositionY
+            self.frame.origin.y = self.defaultValue
             self.adjusted = false
         }
     }

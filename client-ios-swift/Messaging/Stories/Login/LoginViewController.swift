@@ -33,7 +33,7 @@ final class LoginViewController:
     
     // MARK: MovingWithKeyboard
     var adjusted: Bool = false
-    var defaultPositionY: CGFloat = 0.0
+    var defaultValue: CGFloat = 0.0
     var keyboardWillChangeFrameObserver: NSObjectProtocol?
     var keyboardWillHideObserver: NSObjectProtocol?
     

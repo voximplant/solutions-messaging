@@ -57,7 +57,7 @@ final class ActiveConversationViewController:
     
     // MARK: MovingWithKeyboard
     var adjusted: Bool = false
-    var defaultPositionY: CGFloat = 0.0
+    var defaultValue: CGFloat = 0.0
     var moveMultiplier: CGFloat { 1 }
     var keyboardWillChangeFrameObserver: NSObjectProtocol?
     var keyboardWillHideObserver: NSObjectProtocol?
