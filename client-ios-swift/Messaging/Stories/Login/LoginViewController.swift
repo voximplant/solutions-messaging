@@ -17,7 +17,6 @@ protocol LoginViewOutput: AnyObject, ControllerLifeCycleObserver {
 
 final class LoginViewController:
     UIViewController,
-    MovingWithKeyboard,
     LoginViewInput
 {
     var output: LoginViewOutput! // DI
@@ -39,7 +38,6 @@ final class LoginViewController:
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        subscribeOnKeyboardEvents()
         navigationController?.isNavigationBarHidden = true
         output.viewDidLoad()
     }
@@ -47,10 +45,6 @@ final class LoginViewController:
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         output.viewWillAppear()
-    }
-    
-    deinit {
-        unsubscribeFromKeyboardEvents()
     }
     
     @IBAction func loginButtonPressed(_ sender: Any) {
