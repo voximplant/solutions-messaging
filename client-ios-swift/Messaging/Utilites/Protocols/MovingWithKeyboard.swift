@@ -29,7 +29,7 @@ extension MovingWithKeyboard where Self: UIViewController {
             if !self.adjusted {
                 if #available(iOS 11.0, *) {
                     let keyboardHeight = keyboardBeginFrame.origin.y - keyboardEndFrame.origin.y
-                    self.defaultValue = keyboardHeight - self.view.safeAreaInsets.bottom
+                    self.defaultValue = self.additionalSafeAreaInsets.bottom
                     self.additionalSafeAreaInsets.bottom += keyboardHeight - self.view.safeAreaInsets.bottom
                 } else {
                     self.defaultValue = self.view.frame.origin.y
@@ -49,7 +49,7 @@ extension MovingWithKeyboard where Self: UIViewController {
             
             if self.adjusted {
                 if #available(iOS 11.0, *) {
-                    self.additionalSafeAreaInsets.bottom -= self.defaultValue
+                    self.additionalSafeAreaInsets.bottom = self.defaultValue
                 } else {
                     self.view.frame.origin.y = self.defaultValue
                 }
