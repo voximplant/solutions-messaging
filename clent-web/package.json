@@ -20,9 +20,9 @@
   },
   "devDependencies": {
     "@types/ramda": "github:types/npm-ramda#dist",
-    "@vue/cli-plugin-babel": "^3.11.0",
+    "@vue/cli-plugin-babel": "^5.0.8",
     "@vue/cli-plugin-typescript": "^3.11.0",
-    "@vue/cli-service": "^4.2.2",
+    "@vue/cli-service": "^5.0.8",
     "postcss-loader": "^3.0.0",
     "pug": "^2.0.3",
     "pug-plain-loader": "^1.0.0",
